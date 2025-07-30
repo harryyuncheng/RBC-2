@@ -6,7 +6,7 @@ interface CurtisOverlayProps {
   message?: string;
 }
 
-export default function CurtisOverlay({ message = "Curtis Assistant" }: CurtisOverlayProps) {
+export default function CurtisOverlay({ message = "Curtis Advisor Assistant" }: CurtisOverlayProps) {
   const [micEnabled, setMicEnabled] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [detectedText, setDetectedText] = useState("Click microphone to start voice detection");
@@ -614,44 +614,31 @@ export default function CurtisOverlay({ message = "Curtis Assistant" }: CurtisOv
       }}
       onMouseDown={handleMouseDown}
     >
-      <div className="bg-black bg-opacity-90 text-white rounded-xl shadow-2xl min-w-96 max-w-lg">
+      <div className="bg-black/50 text-white rounded-xl shadow-2xl w-128">
         {/* Main message area */}
-        <div className="px-6 py-3 select-none">
+        <div className="px-6 py-3 select-none bg-black/50 rounded-t-xl">
           <div className="flex items-center space-x-3">
             <div className={`w-2 h-2 rounded-full ${
-              isListening ? 'bg-green-400 animate-pulse' : 
-              micEnabled ? 'bg-yellow-400' : 'bg-gray-400'
+              isListening ? 'bg-white animate-pulse' : 
+              micEnabled ? 'bg-gray-300' : 'bg-gray-500'
             }`}></div>
             <span className="text-sm font-medium">{message}</span>
             {!speechSupported && (
-              <span className="text-xs text-red-400 ml-2">(Speech not supported)</span>
+              <span className="text-xs text-gray-300 ml-2">(Speech not supported)</span>
             )}
           </div>
         </div>
         
         {/* Detection display area */}
-        <div className="px-6 py-2 border-t border-gray-600">
+        <div className="px-6 py-2 bg-black/50">
           <div className="text-xs text-gray-300 flex items-center justify-between">
             <div className="flex-1 mr-2">
-              <span className="text-blue-300">Voice Status:</span> {detectedText}
-              {lastScreenCapture && (
-                <span className="ml-2 text-purple-300">
-                  {isCapturingScreen ? ' Capturing screen...' : ' Screen captured'}
-                </span>
+              {detectedText}
+              {isCapturingScreen && (
+                <span className="ml-2 text-gray-300"> Capturing screen...</span>
               )}
               {!lastScreenCapture && screenCaptureEnabled && (
                 <span className="ml-2 text-gray-400"> Click capture button for screen context</span>
-              )}
-              {conversationHistory.length > 0 && (
-                <span 
-                  className="ml-2 text-green-300 cursor-help" 
-                  title={`Curtis remembers ${Math.floor(conversationHistory.length / 2)} conversation exchanges${conversationHistory.length > 20 ? '. Older context is summarized to maintain full conversation awareness.' : '.'} Context is reinforced every 5 exchanges.`}
-                >
-                  📝 {Math.floor(conversationHistory.length / 2)} exchanges
-                  {conversationHistory.length > 20 && (
-                    <span className="text-yellow-300"> (full context maintained)</span>
-                  )}
-                </span>
               )}
             </div>
             {audioLevel > 5 && (
@@ -661,12 +648,12 @@ export default function CurtisOverlay({ message = "Curtis Assistant" }: CurtisOv
                     <div
                       key={i}
                       className={`w-1 h-3 rounded-full transition-colors ${
-                        i < (audioLevel / 20) ? 'bg-green-400' : 'bg-gray-600'
+                        i < (audioLevel / 20) ? 'bg-white' : 'bg-gray-600'
                       }`}
                     />
                   ))}
                 </div>
-                <span className="text-xs text-green-400 ml-1">{Math.round(audioLevel)}%</span>
+                <span className="text-xs text-white ml-1">{Math.round(audioLevel)}%</span>
               </div>
             )}
           </div>
@@ -674,21 +661,21 @@ export default function CurtisOverlay({ message = "Curtis Assistant" }: CurtisOv
 
         {/* Curtis Response area */}
         {(isProcessing || curtisResponse) && (
-          <div className="px-6 py-3 border-t border-gray-600 bg-blue-900 bg-opacity-30">
+          <div className="px-6 py-3 bg-black/50">
             {isProcessing ? (
               <div className="flex items-center space-x-2">
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-400"></div>
-                <span className="text-xs text-blue-300">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                <span className="text-xs text-gray-300">
                   Curtis is thinking...
                   {isCapturingScreen && ' (capturing screen)'}
                 </span>
               </div>
             ) : (
               <div>
-                <div className="text-xs text-blue-400 mb-1 flex items-center">
+                <div className="text-xs text-gray-300 mb-1 flex items-center">
                   Curtis Response:
                   {lastScreenCapture && (
-                    <span className="ml-2 text-purple-400 text-xs">📸 Screenshot included</span>
+                    <span className="ml-2 text-gray-400 text-xs">📸 Screenshot included</span>
                   )}
                 </div>
                 <div className="text-sm text-white max-h-40 overflow-y-auto">
@@ -701,18 +688,18 @@ export default function CurtisOverlay({ message = "Curtis Assistant" }: CurtisOv
 
         {/* Name Update Status */}
         {nameUpdateStatus && (
-          <div className="px-6 py-3 border-t border-gray-600 bg-green-900 bg-opacity-30">
+          <div className="px-6 py-3 bg-black/50">
             <div className="flex items-center space-x-2">
               {nameUpdateStatus.includes("Updating") && (
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-green-400"></div>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
               )}
-              <span className="text-xs text-green-300">{nameUpdateStatus}</span>
+              <span className="text-xs text-gray-300">{nameUpdateStatus}</span>
             </div>
           </div>
         )}
 
         {/* Settings row at bottom */}
-        <div className="px-4 py-2 bg-black bg-opacity-50 rounded-b-xl border-t border-gray-600 select-none">
+        <div className="px-4 py-2 bg-black/50 rounded-b-xl select-none">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               {/* Microphone toggle */}
@@ -723,7 +710,7 @@ export default function CurtisOverlay({ message = "Curtis Assistant" }: CurtisOv
                 title="Toggle microphone"
               >
                 <svg 
-                  className={`w-4 h-4 ${micEnabled ? 'text-green-400' : 'text-red-400'}`} 
+                  className={`w-4 h-4 ${micEnabled ? 'text-white' : 'text-gray-400'}`} 
                   fill="none" 
                   stroke="currentColor" 
                   viewBox="0 0 24 24"
@@ -748,11 +735,11 @@ export default function CurtisOverlay({ message = "Curtis Assistant" }: CurtisOv
                   }
                 }}
                 onMouseDown={(e) => e.stopPropagation()}
-                className="flex items-center space-x-2 hover:bg-purple-700 px-2 py-1 rounded transition-colors"
+                className="flex items-center space-x-2 hover:bg-gray-700 px-2 py-1 rounded transition-colors"
                 title="Capture screen (requires user permission)"
               >
                 <svg 
-                  className={`w-4 h-4 ${lastScreenCapture ? 'text-purple-400' : 'text-gray-400'}`} 
+                  className={`w-4 h-4 ${lastScreenCapture ? 'text-gray-300' : 'text-gray-400'}`} 
                   fill="none" 
                   stroke="currentColor" 
                   viewBox="0 0 24 24"
@@ -770,7 +757,7 @@ export default function CurtisOverlay({ message = "Curtis Assistant" }: CurtisOv
                 <button
                   onClick={() => setCurtisResponse("")}
                   onMouseDown={(e) => e.stopPropagation()}
-                  className="flex items-center space-x-1 hover:bg-red-700 px-2 py-1 rounded transition-colors text-red-400"
+                  className="flex items-center space-x-1 hover:bg-gray-700 px-2 py-1 rounded transition-colors text-gray-300"
                   title="Clear response"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -785,7 +772,7 @@ export default function CurtisOverlay({ message = "Curtis Assistant" }: CurtisOv
                 <button
                   onClick={clearConversationHistory}
                   onMouseDown={(e) => e.stopPropagation()}
-                  className="flex items-center space-x-1 hover:bg-orange-700 px-2 py-1 rounded transition-colors text-orange-400"
+                  className="flex items-center space-x-1 hover:bg-gray-700 px-2 py-1 rounded transition-colors text-gray-300"
                   title="Clear conversation history"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -798,39 +785,34 @@ export default function CurtisOverlay({ message = "Curtis Assistant" }: CurtisOv
               {/* Recording indicator */}
               {isListening && (
                 <div className="flex items-center space-x-1">
-                  <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
-                  <span className="text-xs text-red-400">LIVE</span>
+                  <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
                 </div>
               )}
             </div>
 
             <div className="flex items-center space-x-2">
               {/* Volume indicator */}
-              <div className="text-xs text-gray-400">
-                Vol: {isListening ? 
-                  Array.from({length: 5}, (_, i) => i < (audioLevel / 20) ? '●' : '○').join('') 
-                  : '○○○○○'
-                }
+              <div className="text-xs">
+                <span className="text-gray-400">Vol: </span>
+                {isListening ? (
+                  <span>
+                    {Array.from({length: 4}, (_, i) => (
+                      <span key={i} className={i < (audioLevel / 25) ? 'text-green-400' : 'text-gray-400'}>
+                        {i < (audioLevel / 25) ? '●' : '○'}
+                      </span>
+                    ))}
+                  </span>
+                ) : (
+                  <span className="text-gray-400">○○○○</span>
+                )}
               </div>
 
               {/* Browser compatibility indicator */}
               {speechSupported ? (
-                <div className="w-2 h-2 bg-green-500 rounded-full" title="Speech recognition supported"></div>
+                <div className="w-2 h-2 bg-white rounded-full" title="Speech recognition supported"></div>
               ) : (
-                <div className="w-2 h-2 bg-red-500 rounded-full" title="Speech recognition not supported"></div>
+                <div className="w-2 h-2 bg-gray-500 rounded-full" title="Speech recognition not supported"></div>
               )}
-
-              {/* Settings button */}
-              <button 
-                className="hover:bg-gray-700 p-1 rounded transition-colors" 
-                title="Settings"
-                onMouseDown={(e) => e.stopPropagation()}
-              >
-                <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-              </button>
 
               {/* Center/Reset button */}
               <button 
@@ -841,17 +823,6 @@ export default function CurtisOverlay({ message = "Curtis Assistant" }: CurtisOv
               >
                 <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-              </button>
-
-              {/* Minimize button */}
-              <button 
-                className="hover:bg-gray-700 p-1 rounded transition-colors" 
-                title="Minimize"
-                onMouseDown={(e) => e.stopPropagation()}
-              >
-                <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
                 </svg>
               </button>
             </div>
