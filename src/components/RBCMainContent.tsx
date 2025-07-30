@@ -252,7 +252,11 @@ export default function RBCMainContent({ isMobile, onNavigate }: RBCMainContentP
                 <div className="w-full bg-gray-200 rounded-full h-2 mb-4">
                   <div className="bg-green-600 h-2 rounded-full" style={{ width: '76%' }}></div>
                 </div>
-                <button className="text-[#005DAA] hover:text-[#004080] font-medium text-sm">
+                <button 
+                  className="text-[#005DAA] hover:text-[#004080] font-medium text-sm"
+                  onClick={() => onNavigate?.('credit-score')}
+                  aria-label="View full credit score report"
+                >
                   View Full Report
                 </button>
               </div>
