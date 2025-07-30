@@ -1,6 +1,7 @@
 'use client';
 
 import { PageType } from './pages/PageRouter';
+import { useState, useEffect } from 'react';
 
 interface RBCMainContentProps {
   isMobile: boolean;
@@ -8,13 +9,46 @@ interface RBCMainContentProps {
 }
 
 export default function RBCMainContent({ isMobile, onNavigate }: RBCMainContentProps) {
+  const [userData, setUserData] = useState({ 
+    user: { 
+      firstName: 'Loading...', 
+      lastName: '', 
+      fullName: 'Loading...' 
+    } 
+  });
+
+  // Fetch user data when component mounts
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const response = await fetch('/api/user');
+        if (response.ok) {
+          const data = await response.json();
+          setUserData(data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch user data:', error);
+        // Fallback to default values
+        setUserData({ 
+          user: { 
+            firstName: 'John', 
+            lastName: '', 
+            fullName: 'John' 
+          } 
+        });
+      }
+    };
+
+    fetchUserData();
+  }, []);
+
   if (isMobile) {
     return (
       <main className="bg-gray-50 min-h-screen">
         {/* Hero Section */}
-        <div className="bg-gradient-to-br from-[#005DAA] to-[#004080] text-white">
+        <div className="bg-cover bg-center bg-no-repeat text-white" style={{ backgroundImage: 'url(/banff.png)' }}>
           <div className="p-6 pt-8">
-            <h1 className="text-2xl font-bold mb-4">Welcome back, John</h1>
+            <h1 className="text-2xl font-bold mb-4 text-shadow-lg">Welcome back, {userData.user.firstName}</h1>
           </div>
         </div>
 
@@ -143,14 +177,14 @@ export default function RBCMainContent({ isMobile, onNavigate }: RBCMainContentP
   return (
     <main className="bg-gray-50 min-h-screen">
       {/* Hero Section */}
-      <div className="bg-gradient-to-r from-[#005DAA] to-[#0066CC] text-white">
+      <div className="bg-cover bg-center bg-no-repeat text-white" style={{ backgroundImage: 'url(/banff.png)' }}>
         <div className="max-w-7xl mx-auto px-4 py-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
             <div>
-              <h1 className="text-4xl lg:text-5xl font-bold mb-6">
-                Welcome back, John
+              <h1 className="text-4xl lg:text-5xl font-bold mb-6 text-shadow-lg">
+                Welcome back, {userData.user.firstName}
               </h1>
-              <p className="text-xl mb-8 text-blue-100">
+              <p className="text-xl mb-8 text-white drop-shadow-lg">
                 Manage your finances with confidence. Your financial goals are within reach.
               </p>
             </div>

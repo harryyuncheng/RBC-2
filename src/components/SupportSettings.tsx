@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface SupportSettingsProps {
   isOpen: boolean;
@@ -10,6 +10,26 @@ interface SupportSettingsProps {
 export default function SupportSettings({ isOpen, onToggle }: SupportSettingsProps) {
   const [micEnabled, setMicEnabled] = useState(true);
   const [currentStep, setCurrentStep] = useState(1);
+  const [userData, setUserData] = useState({ user: { fullName: 'Loading...' } });
+
+  // Fetch user data when component mounts
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const response = await fetch('/api/user');
+        if (response.ok) {
+          const data = await response.json();
+          setUserData(data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch user data:', error);
+        // Fallback to default values
+        setUserData({ user: { fullName: 'John Doe' } });
+      }
+    };
+
+    fetchUserData();
+  }, []);
 
   return (
     <>
@@ -110,7 +130,7 @@ export default function SupportSettings({ isOpen, onToggle }: SupportSettingsPro
               <h4 className="text-sm font-medium text-gray-300 mb-3">Session Info</h4>
               <div className="text-xs text-gray-400 space-y-1">
                 <div>Duration: 2:34</div>
-                <div>Customer: John Doe</div>
+                <div>Customer: {userData.user.fullName}</div>
                 <div>Demo: Credit Score Check</div>
               </div>
             </div>

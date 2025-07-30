@@ -12,7 +12,6 @@ export default function Home() {
   const [isMobile, setIsMobile] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSupportOpen, setIsSupportOpen] = useState(false);
-  const [curtisMessage] = useState("Try navigating to Credit Score");
 
   const { currentPage, setCurrentPage, PageComponent } = PageRouter({ isMobile });
 
@@ -44,7 +43,7 @@ export default function Home() {
       />
 
       {/* Curtis Assistant Overlay */}
-      <CurtisOverlay message={curtisMessage} />
+      <CurtisOverlay />
 
       {/* Main RBC Interface */}
       <div className={`${isSupportOpen ? 'ml-72' : ''} transition-all duration-300`}>
