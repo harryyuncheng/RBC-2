@@ -7,12 +7,13 @@ import { useConversation } from '../hooks/useConversation';
 import { useUserName, parseNameFromSpeech } from '../hooks/useUserName';
 import { useDragAndDrop } from '../hooks/useDragAndDrop';
 import { captureDOMContext, loadContextPrompt } from '../utils/domContext';
+import { OverlayButton } from './ui/OverlayButton';
 
 interface CurtisOverlayProps {
   message?: string;
 }
 
-export default function CurtisOverlay({ message = "Curtis Advisor Assistant" }: CurtisOverlayProps) {
+export default function CurtisOverlay({ message = "Curtis" }: CurtisOverlayProps) {
   const [contextPrompt, setContextPrompt] = useState("");
   const overlayRef = useRef<HTMLDivElement>(null);
 
@@ -88,10 +89,10 @@ export default function CurtisOverlay({ message = "Curtis Advisor Assistant" }: 
         {/* Main message area */}
         <div className="px-6 py-3 select-none rounded-t-xl">
           <div className="flex items-center space-x-3">
-            <div className={`w-2 h-2 rounded-full ${
-              speechRecognition.isListening ? 'bg-white animate-pulse' : 
-              speechRecognition.micEnabled ? 'bg-gray-300' : 'bg-gray-500'
-            }`}></div>
+            <div 
+              className={`w-2 h-2 rounded-full ${speechRecognition.speechSupported ? 'bg-green-400' : 'bg-red-400'}`}
+              title={speechRecognition.speechSupported ? "Speech recognition supported" : "Speech recognition not supported"}
+            />
             <span className="text-sm font-medium">{message}</span>
             {!speechRecognition.speechSupported && (
               <span className="text-xs text-gray-300 ml-2">(Speech not supported)</span>
@@ -134,7 +135,7 @@ export default function CurtisOverlay({ message = "Curtis Advisor Assistant" }: 
           <div className="px-6 py-3">
             {conversation.isProcessing ? (
               <div className="flex items-center space-x-2">
-                <div className="animate-spin rounded-full h-4 w-4"></div>
+                <div className="animate-spin rounded-full h-4 w-4 border-2 border-gray-600 border-t-white"></div>
                 <span className="text-xs text-gray-300">
                   Curtis is thinking...
                   {screenCapture.isCapturingScreen && ' (capturing screen)'}
@@ -158,144 +159,103 @@ export default function CurtisOverlay({ message = "Curtis Advisor Assistant" }: 
 
         {/* Name Update Status */}
         {userName.nameUpdateStatus && (
-          <div className="px-6 py-3">
-            <div className="flex items-center space-x-2">
-              {userName.nameUpdateStatus.includes("Updating") && (
-                <div className="animate-spin rounded-full h-4 w-4"></div>
-              )}
-              <span className="text-xs text-gray-300">{userName.nameUpdateStatus}</span>
-            </div>
+          <div className="px-6 py-3 flex items-center space-x-2">
+            {userName.nameUpdateStatus.includes("Updating") && (
+              <div className="animate-spin rounded-full h-4 w-4"></div>
+            )}
+            <span className="text-xs text-gray-300">{userName.nameUpdateStatus}</span>
           </div>
         )}
 
         {/* Settings row at bottom */}
-        <div className="px-4 py-2">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              {/* Microphone toggle */}
-              <button
-                onClick={() => speechRecognition.toggleMic(handleSpeechResult)}
-                onMouseDown={(e) => e.stopPropagation()}
-                className="flex items-center space-x-2 px-2 py-1 rounded"
-                title="Toggle microphone"
-              >
-                <svg 
-                  className={`w-4 h-4 ${speechRecognition.micEnabled ? 'text-white' : 'text-gray-400'}`} 
-                  fill="none" 
-                  stroke="currentColor" 
-                  viewBox="0 0 24 24"
-                >
-                  {speechRecognition.micEnabled ? (
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
-                  ) : (
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.586 5.586A2 2 0 015 7v6a7 7 0 0012.0309 5.0309M12 19v4m0 0H8m4 0h4M9.879 9.879a3 3 0 004.242 4.242M15 11V5a3 3 0 00-6 0v.586M19 11c0 1.163-.282 2.261-.781 3.237" />
-                  )}
-                </svg>
-                <span className="text-xs">{speechRecognition.micEnabled ? 'ON' : 'OFF'}</span>
-              </button>
-
-              {/* Manual screen capture button */}
-              <button
-                onClick={async () => {
-                  try {
-                    await screenCapture.captureScreen(true);
-                  } catch (error) {
-                    console.warn('Manual screen capture failed:', error instanceof Error ? error.message : 'Unknown error');
-                    speechRecognition.setDetectedText("Screen capture failed - permission may be required");
-                  }
-                }}
-                onMouseDown={(e) => e.stopPropagation()}
-                className="flex items-center space-x-2 px-2 py-1 rounded"
-                title="Capture screen (requires user permission)"
-              >
-                <svg 
-                  className={`w-4 h-4 ${screenCapture.lastScreenCapture ? 'text-gray-300' : 'text-gray-400'}`} 
-                  fill="none" 
-                  stroke="currentColor" 
-                  viewBox="0 0 24 24"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-                <span className="text-xs">
-                  {screenCapture.isCapturingScreen ? 'Capturing...' : screenCapture.lastScreenCapture ? 'Captured' : 'Capture'}
-                </span>
-              </button>
-
-              {/* Clear response button */}
-              {conversation.curtisResponse && (
-                <button
-                  onClick={() => conversation.setCurtisResponse("")}
-                  onMouseDown={(e) => e.stopPropagation()}
-                  className="flex items-center space-x-1px-2 py-1 rounded"
-                  title="Clear response"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
-                  <span className="text-xs">Clear</span>
-                </button>
-              )}
-
-              {/* Clear conversation history button */}
-              {conversation.conversationHistory.length > 0 && (
-                <button
-                  onClick={conversation.clearConversationHistory}
-                  onMouseDown={(e) => e.stopPropagation()}
-                  className="flex items-center space-x-1 px-2 py-1 rounded"
-                  title="Clear conversation history"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M3 12l6.414 6.414a2 2 0 001.414.586H19a2 2 0 002-2V7a2 2 0 00-2-2h-8.172a2 2 0 00-1.414.586L3 12z" />
-                  </svg>
-                  <span className="text-xs">History</span>
-                </button>
-              )}
-
-              {/* Recording indicator */}
-              {speechRecognition.isListening && (
-                <div className="flex items-center space-x-1">
-                  <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
-                </div>
-              )}
-            </div>
-
-            <div className="flex items-center space-x-2">
-              {/* Volume indicator */}
-              <div className="text-xs">
-                <span className="text-gray-400">Vol: </span>
-                {speechRecognition.isListening ? (
-                  <span>
-                    {Array.from({length: 4}, (_, i) => (
-                      <span key={i} className={i < (speechRecognition.audioLevel / 25) ? 'text-green-400' : 'text-gray-400'}>
-                        {i < (speechRecognition.audioLevel / 25) ? '●' : '○'}
-                      </span>
-                    ))}
-                  </span>
+        <div className="px-4 py-2 flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            {/* Microphone toggle */}
+            <OverlayButton
+              onClick={() => speechRecognition.toggleMic(handleSpeechResult)}
+              title="Toggle microphone"
+              className={speechRecognition.micEnabled ? 'text-white' : 'text-gray-400'}
+              label={speechRecognition.micEnabled ? 'ON' : 'OFF'}
+              icon={
+                speechRecognition.micEnabled ? (
+                  <path d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
                 ) : (
-                  <span className="text-gray-400">○○○○</span>
-                )}
+                  <path d="M5.586 5.586A2 2 0 015 7v6a7 7 0 0012.0309 5.0309M12 19v4m0 0H8m4 0h4M9.879 9.879a3 3 0 004.242 4.242M15 11V5a3 3 0 00-6 0v.586M19 11c0 1.163-.282 2.261-.781 3.237" />
+                )
+              }
+            />
+
+            {/* Manual screen capture button */}
+            <OverlayButton
+              onClick={async () => {
+                try {
+                  await screenCapture.captureScreen(true);
+                } catch (error) {
+                  console.warn('Manual screen capture failed:', error instanceof Error ? error.message : 'Unknown error');
+                  speechRecognition.setDetectedText("Screen capture failed - permission may be required");
+                }
+              }}
+              title="Capture screen (requires user permission)"
+              className={screenCapture.lastScreenCapture ? 'text-gray-300' : 'text-gray-400'}
+              label={screenCapture.isCapturingScreen ? 'Capturing...' : screenCapture.lastScreenCapture ? 'Captured' : 'Capture'}
+              icon={
+                <>
+                  <path d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                  <path d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                </>
+              }
+            />
+
+            {/* Clear conversation history button */}
+            {conversation.conversationHistory.length > 0 && (
+              <OverlayButton
+                onClick={conversation.clearConversationHistory}
+                title="Clear conversation history"
+                className="text-gray-300"
+                label="History"
+                icon={
+                  <path d="M12 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M3 12l6.414 6.414a2 2 0 001.414.586H19a2 2 0 002-2V7a2 2 0 00-2-2h-8.172a2 2 0 00-1.414.586L3 12z" />
+                }
+              />
+            )}
+
+            {/* Recording indicator */}
+            {speechRecognition.isListening && (
+              <div className="flex items-center space-x-1">
+                <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
               </div>
+            )}
+          </div>
 
-              {/* Browser compatibility indicator */}
-              {speechRecognition.speechSupported ? (
-                <div className="w-2 h-2 rounded-full" title="Speech recognition supported"></div>
+          <div className="flex items-center space-x-2">
+            {/* Volume indicator */}
+            <div className="text-xs">
+              <span className="text-gray-400">Vol: </span>
+              {speechRecognition.isListening ? (
+                <span>
+                  {Array.from({length: 4}, (_, i) => (
+                    <span key={i} className={i < (speechRecognition.audioLevel / 25) ? 'text-green-400' : 'text-gray-400'}>
+                      {i < (speechRecognition.audioLevel / 25) ? '●' : '○'}
+                    </span>
+                  ))}
+                </span>
               ) : (
-                <div className="w-2 h-2 rounded-full" title="Speech recognition not supported"></div>
+                <span className="text-gray-400">○○○○</span>
               )}
-
-              {/* Center/Reset button */}
-              <button 
-                className="p-1 rounded" 
-                title="Reset to center position"
-                onClick={dragAndDrop.snapToCenter}
-                onMouseDown={(e) => e.stopPropagation()}
-              >
-                <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-              </button>
             </div>
+
+            {/* Browser compatibility indicator */}
+
+            {/* Center/Reset button */}
+            <OverlayButton
+              onClick={dragAndDrop.snapToCenter}
+              title="Reset to center position"
+              variant="compact"
+              className="text-gray-400"
+              icon={
+                <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              }
+            />
           </div>
         </div>
       </div>
