@@ -6,6 +6,8 @@
   --rbc-blue: #005DAA;
   --rbc-blue-dark: #004080;
   --rbc-blue-light: #0066CC;
+  --overlay-background: rgba(0, 0, 0, 0.8);
+  --overlay-icon-color: #9CA3AF;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -30,6 +32,11 @@ body {
 
 .rbc-blue-hover:hover {
   background-color: #004080;
+}
+
+/* Curtis Overlay styles */
+.overlay-icon {
+  color: var(--overlay-icon-color);
 }
 
 /* Smooth transitions for mobile view */
