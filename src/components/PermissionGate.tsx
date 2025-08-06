@@ -12,7 +12,7 @@ interface PermissionGateProps {
 }
 
 export default function PermissionGate({ children, onResetRef }: PermissionGateProps) {
-  const [showModal, setShowModal] = useState(true);
+  const [showModal, setShowModal] = useState(false);
   const [permissions, setPermissions] = useState<PermissionStatus>({
     microphone: 'pending'
   });
@@ -29,32 +29,68 @@ export default function PermissionGate({ children, onResetRef }: PermissionGateP
     });
   }, []);
 
-  // Check if permissions have been previously requested and browser support
+  // Check microphone permission status and show modal if needed
   useEffect(() => {
-    const hasRequested = localStorage.getItem('permissions-requested');
-    
-    // Check if the required APIs are available
-    const isGetUserMediaSupported = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
-    
-    if (hasRequested === 'true' || !isGetUserMediaSupported) {
-      setShowModal(false);
-      setHasRequestedPermissions(true);
-    }
+    const checkMicrophonePermission = async () => {
+      // Check if we've already asked in this session
+      const hasRequestedInSession = sessionStorage.getItem('microphone-requested');
+      
+      // Check if the required APIs are available
+      const isGetUserMediaSupported = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+      
+      if (!isGetUserMediaSupported || hasRequestedInSession === 'true') {
+        return; // Don't show modal
+      }
+
+      try {
+        // Check current microphone permission status
+        const permissionStatus = await navigator.permissions.query({ name: 'microphone' as PermissionName });
+        
+        if (permissionStatus.state === 'denied' || permissionStatus.state === 'prompt') {
+          // Show modal only if permission is denied or not yet requested
+          setShowModal(true);
+        }
+        
+        setPermissions(prev => ({ 
+          ...prev, 
+          microphone: permissionStatus.state === 'granted' ? 'granted' : 
+                     permissionStatus.state === 'denied' ? 'denied' : 'pending'
+        }));
+      } catch (error) {
+        // Fallback: if permissions API not supported, try getUserMedia to check
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          stream.getTracks().forEach(track => track.stop());
+          setPermissions(prev => ({ ...prev, microphone: 'granted' }));
+        } catch (getUserMediaError) {
+          // Show modal if we can't access microphone and haven't asked yet
+          setShowModal(true);
+          setPermissions(prev => ({ ...prev, microphone: 'denied' }));
+        }
+      }
+    };
+
+    checkMicrophonePermission();
   }, []);
 
   // Provide reset function to parent via ref
   useEffect(() => {
     if (onResetRef) {
       onResetRef.current = () => {
-        // Clear localStorage
-        localStorage.removeItem('permissions-requested');
+        // Clear session storage
+        sessionStorage.removeItem('microphone-requested');
         // Reset component state
-        setShowModal(true);
+        setShowModal(false);
         setHasRequestedPermissions(false);
         setPermissions({
           microphone: 'pending'
         });
         setIsRequesting(false);
+        
+        // Re-check permissions after reset
+        setTimeout(() => {
+          window.location.reload();
+        }, 100);
       };
     }
   }, [onResetRef]);
@@ -78,15 +114,14 @@ export default function PermissionGate({ children, onResetRef }: PermissionGateP
   const handleGrantPermissions = async () => {
     setIsRequesting(true);
     
+    // Mark permissions as requested in this session and close immediately
+    sessionStorage.setItem('microphone-requested', 'true');
+    setShowModal(false);
+    
     try {
-      // Request microphone permission
+      // Request microphone permission in the background
       const micStatus = await requestMicrophonePermission();
       setPermissions(prev => ({ ...prev, microphone: micStatus }));
-
-      // Mark permissions as requested and show status
-      localStorage.setItem('permissions-requested', 'true');
-      setHasRequestedPermissions(true);
-
     } catch (error) {
       console.error('Error requesting permissions:', error);
     } finally {
@@ -95,7 +130,7 @@ export default function PermissionGate({ children, onResetRef }: PermissionGateP
   };
 
   const handleContinueWithoutPermissions = () => {
-    localStorage.setItem('permissions-requested', 'true');
+    sessionStorage.setItem('microphone-requested', 'true');
     setHasRequestedPermissions(true);
     setShowModal(false);
   };
@@ -142,7 +177,7 @@ export default function PermissionGate({ children, onResetRef }: PermissionGateP
     <>
       {/* Modal Backdrop */}
       <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-auto">
+        <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full mx-auto">
           {/* Header */}
           <div className="px-6 py-4 border-b border-gray-200">
             <div className="flex items-center space-x-3">
@@ -155,20 +190,13 @@ export default function PermissionGate({ children, onResetRef }: PermissionGateP
                 <h2 className="text-xl font-semibold text-gray-900">
                   Welcome to Curtis Assistant
                 </h2>
-                <p className="text-sm text-gray-600">
-                  Microphone access needed for voice commands
-                </p>
               </div>
             </div>
           </div>
 
           {/* Content */}
           <div className="px-6 py-4">
-            <p className="text-gray-700 mb-4">
-              Curtis works best with access to your microphone. This permission helps provide:
-            </p>
-
-            <div className="space-y-3 mb-6">
+            <div className="space-y-3 mb-6 mt-2">
               <div className="flex items-start space-x-3">
                 <div className="flex-shrink-0 mt-1">
                   <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -176,23 +204,9 @@ export default function PermissionGate({ children, onResetRef }: PermissionGateP
                   </svg>
                 </div>
                 <div>
-                  <h3 className="font-medium text-gray-900">Microphone Access</h3>
+                  <h3 className="font-medium text-gray-900">Microphone Access Needed</h3>
                   <p className="text-sm text-gray-600">
-                    Voice commands and natural language questions for hands-free interaction
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-start space-x-3">
-                <div className="flex-shrink-0 mt-1">
-                  <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-6-7 9 9 0 016 7z" />
-                  </svg>
-                </div>
-                <div>
-                  <h3 className="font-medium text-gray-900">Smart Context Awareness</h3>
-                  <p className="text-sm text-gray-600">
-                    Automatically understands page content and forms for contextual assistance
+                    Curtis works best when tracking conversations for a hands-free experience
                   </p>
                 </div>
               </div>
@@ -227,9 +241,9 @@ export default function PermissionGate({ children, onResetRef }: PermissionGateP
               </div>
             )}
 
-            <div className="text-xs text-gray-500 mb-4">
+            <div className="text-xs text-gray-500 mb-2">
               Note: You can always change microphone permissions later in your browser settings. 
-              Curtis will work without microphone permissions, but voice commands won't be available.
+              Curtis will work without microphone permissions, but AI Assistance won't be available.
             </div>
           </div>
 
