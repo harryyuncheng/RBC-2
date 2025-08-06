@@ -212,31 +212,20 @@ export default function CurtisOverlay({ message = "Curtis" }: CurtisOverlayProps
               }
             />
 
-            {/* Clear context cache button */}
-            {lastDOMContext && (
+            {/* Combined clear button */}
+            {(lastDOMContext || conversation.conversationHistory.length > 0) && (
               <OverlayButton
                 onClick={() => {
-                  setLastDOMContext(null);
-                  speechRecognition.setDetectedText("Page context cache cleared");
+                  if (lastDOMContext) {
+                    setLastDOMContext(null);
+                    speechRecognition.setDetectedText("Page context cache cleared");
+                  }
+                  if (conversation.conversationHistory.length > 0) {
+                    conversation.clearConversationHistory();
+                  }
                 }}
-                title="Clear context cache"
+                title="Clear context cache and conversation history"
                 className="text-gray-400"
-                label="Clear"
-                icon={
-                  <>
-                    <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </>
-                }
-              />
-            )}
-
-            {/* Clear conversation history button */}
-            {conversation.conversationHistory.length > 0 && (
-              <OverlayButton
-                onClick={conversation.clearConversationHistory}
-                title="Clear conversation history"
-                className="text-gray-300"
-                label="History"
                 icon={
                   <path d="M12 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M3 12l6.414 6.414a2 2 0 001.414.586H19a2 2 0 002-2V7a2 2 0 00-2-2h-8.172a2 2 0 00-1.414.586L3 12z" />
                 }
