@@ -241,22 +241,6 @@ export default function CurtisOverlay({ message = "Curtis" }: CurtisOverlayProps
           </div>
 
           <div className="flex items-center space-x-2">
-            {/* Volume indicator */}
-            <div className="text-xs">
-              <span className="text-gray-400">Vol: </span>
-              {speechRecognition.isListening ? (
-                <span>
-                  {Array.from({length: 4}, (_, i) => (
-                    <span key={i} className={i < (speechRecognition.audioLevel / 25) ? 'text-green-400' : 'text-gray-400'}>
-                      {i < (speechRecognition.audioLevel / 25) ? '●' : '○'}
-                    </span>
-                  ))}
-                </span>
-              ) : (
-                <span className="text-gray-400">○○○○</span>
-              )}
-            </div>
-
             {/* Browser compatibility indicator */}
 
             {/* Center/Reset button */}
