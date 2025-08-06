@@ -11,11 +11,15 @@ interface SupportSettingsProps {
 export default function SupportSettings({ isOpen, onToggle, onResetDemo }: SupportSettingsProps) {
   const [micEnabled, setMicEnabled] = useState(true);
   const [currentStep, setCurrentStep] = useState(1);
-  const [userData, setUserData] = useState({ user: { fullName: 'Loading...' } });
+  const [userData, setUserData] = useState({ user: { fullName: 'Harry' } }); // Start with default
+  const [isLoading, setIsLoading] = useState(false);
 
-  // Fetch user data when component mounts
+  // Fetch user data when component mounts or becomes visible
   useEffect(() => {
+    if (!isOpen) return; // Only fetch when panel is open to reduce unnecessary API calls
+    
     const fetchUserData = async () => {
+      setIsLoading(true);
       try {
         const response = await fetch('/api/user');
         if (response.ok) {
@@ -24,13 +28,14 @@ export default function SupportSettings({ isOpen, onToggle, onResetDemo }: Suppo
         }
       } catch (error) {
         console.error('Failed to fetch user data:', error);
-        // Fallback to default values
-        setUserData({ user: { fullName: 'John Doe' } });
+        // Keep the default values
+      } finally {
+        setIsLoading(false);
       }
     };
 
     fetchUserData();
-  }, []);
+  }, [isOpen]); // Only fetch when panel opens
 
   return (
     <>
@@ -46,9 +51,9 @@ export default function SupportSettings({ isOpen, onToggle, onResetDemo }: Suppo
       </button>
 
       {/* Settings panel */}
-      <div className={`fixed left-0 top-0 h-full bg-gray-800 text-white shadow-2xl transition-transform duration-300 z-40 ${
+      <div className={`support-panel-container fixed left-0 top-0 h-full bg-gray-800 bg-opacity-95 backdrop-blur-sm text-white shadow-2xl transition-transform duration-300 z-50 ${
         isOpen ? 'translate-x-0' : '-translate-x-full'
-      }`} style={{ width: '280px' }}>
+      }`} style={{ width: '320px' }}>
         <div className="p-4">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-lg font-semibold">Support Settings</h3>
@@ -160,14 +165,6 @@ export default function SupportSettings({ isOpen, onToggle, onResetDemo }: Suppo
           </div>
         </div>
       </div>
-
-      {/* Overlay when open */}
-      {isOpen && (
-        <div 
-          className="fixed inset-0 bg-black bg-opacity-25 z-30"
-          onClick={onToggle}
-        />
-      )}
     </>
   );
 }

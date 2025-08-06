@@ -61,3 +61,54 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: #a8a8a8;
 }
+
+/* Z-index layering system */
+.z-overlay-low {
+  z-index: 40; /* Curtis Overlay */
+}
+
+.z-overlay-high {
+  z-index: 50; /* Support Settings */
+}
+
+.z-modal {
+  z-index: 60; /* Future modals */
+}
+
+/* Prevent layout shifts when support panel opens */
+.support-panel-open {
+  margin-left: 0;
+}
+
+/* Isolate support panel to prevent repaints of main content */
+.support-panel-container {
+  contain: layout style paint;
+  will-change: transform;
+}
+
+/* Ensure banff background image stays stable during re-renders */
+.banff-hero {
+  background-image: url(/banff.png);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  /* Force GPU acceleration but prevent repaints */
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  /* Prevent background from disappearing during transitions */
+  background-attachment: scroll;
+  /* Isolate this element to prevent repaints */
+  contain: paint;
+}
+
+/* Preload the banff image to prevent loading delays */
+body::after {
+  content: '';
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  opacity: 0;
+  background-image: url(/banff.png);
+  z-index: -9999;
+}

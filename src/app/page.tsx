@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import RBCHeader from '../components/RBCHeader';
 import RBCMainContent from '../components/RBCMainContent';
 import ViewToggle from '../components/ViewToggle';
@@ -17,22 +17,22 @@ export default function Home() {
 
   const { currentPage, setCurrentPage, PageComponent } = PageRouter({ isMobile });
 
-  const handleViewToggle = () => {
+  const handleViewToggle = useCallback(() => {
     setIsMobile(!isMobile);
     setIsMobileMenuOpen(false); // Close mobile menu when switching views
-  };
+  }, [isMobile]);
 
-  const handleMobileMenuToggle = () => {
+  const handleMobileMenuToggle = useCallback(() => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
-  };
+  }, [isMobileMenuOpen]);
 
-  const handleSupportToggle = () => {
+  const handleSupportToggle = useCallback(() => {
     setIsSupportOpen(!isSupportOpen);
-  };
+  }, [isSupportOpen]);
 
-  const handleNavigation = (page: string) => {
+  const handleNavigation = useCallback((page: string) => {
     setCurrentPage(page as PageType);
-  };
+  }, [setCurrentPage]);
 
   return (
     <div className={`min-h-screen bg-gray-50 ${isMobile ? 'max-w-sm mx-auto bg-white' : ''}`}>
@@ -55,7 +55,7 @@ export default function Home() {
       </PermissionGate>
 
       {/* Main RBC Interface */}
-      <div className={`${isSupportOpen ? 'ml-72' : ''} transition-all duration-300`}>
+      <div>
         <RBCHeader 
           isMobile={isMobile}
           onMenuToggle={handleMobileMenuToggle}

@@ -1,25 +1,27 @@
 'use client';
 
 import { PageType } from './pages/PageRouter';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, memo } from 'react';
 
 interface RBCMainContentProps {
   isMobile: boolean;
   onNavigate?: (page: PageType) => void;
 }
 
-export default function RBCMainContent({ isMobile, onNavigate }: RBCMainContentProps) {
+const RBCMainContent = memo(function RBCMainContent({ isMobile, onNavigate }: RBCMainContentProps) {
   const [userData, setUserData] = useState({ 
     user: { 
-      firstName: 'Loading...', 
+      firstName: 'Harry', // Start with a default name instead of Loading...
       lastName: '', 
-      fullName: 'Loading...' 
+      fullName: 'Harry' 
     } 
   });
+  const [isLoading, setIsLoading] = useState(false); // Separate loading state
 
   // Fetch user data when component mounts
   useEffect(() => {
     const fetchUserData = async () => {
+      setIsLoading(true);
       try {
         const response = await fetch('/api/user');
         if (response.ok) {
@@ -28,14 +30,9 @@ export default function RBCMainContent({ isMobile, onNavigate }: RBCMainContentP
         }
       } catch (error) {
         console.error('Failed to fetch user data:', error);
-        // Fallback to default values
-        setUserData({ 
-          user: { 
-            firstName: 'John', 
-            lastName: '', 
-            fullName: 'John' 
-          } 
-        });
+        // Keep the default values instead of setting fallback
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -46,8 +43,8 @@ export default function RBCMainContent({ isMobile, onNavigate }: RBCMainContentP
     return (
       <main className="bg-gray-50 min-h-screen">
         {/* Hero Section */}
-        <div className="bg-cover bg-center bg-no-repeat text-white" style={{ backgroundImage: 'url(/banff.png)' }}>
-          <div className="p-6 pt-8">
+        <div className="banff-hero text-white relative">
+          <div className="p-6 pt-8 relative z-10">
             <h1 className="text-2xl font-bold mb-4 text-shadow-lg">Welcome back, {userData.user.firstName}</h1>
           </div>
         </div>
@@ -355,4 +352,6 @@ export default function RBCMainContent({ isMobile, onNavigate }: RBCMainContentP
       </div>
     </main>
   );
-}
+});
+
+export default RBCMainContent;
