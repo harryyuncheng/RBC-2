@@ -17,6 +17,7 @@ interface CurtisOverlayProps {
 export default function CurtisOverlay({ message = "Curtis" }: CurtisOverlayProps) {
   const [contextPrompt, setContextPrompt] = useState("");
   const [lastDOMContext, setLastDOMContext] = useState<string | null>(null);
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const overlayRef = useRef<HTMLDivElement>(null);
 
   // Custom hooks
@@ -120,7 +121,13 @@ export default function CurtisOverlay({ message = "Curtis" }: CurtisOverlayProps
                 className={`w-2 h-2 rounded-full ${speechRecognition.speechSupported ? 'bg-green-400' : 'bg-red-400'}`}
                 title={speechRecognition.speechSupported ? "Speech recognition supported" : "Speech recognition not supported"}
               />
-              <span className="text-sm">{message}</span>
+              <span 
+                className="text-sm cursor-pointer hover:text-gray-200 transition-colors" 
+                onClick={() => setIsCollapsed(!isCollapsed)}
+                title="Click to expand/collapse"
+              >
+                {message}
+              </span>
               {!speechRecognition.speechSupported && (
                 <span className="text-xs text-gray-300 ml-2">(Speech not supported)</span>
               )}
@@ -130,7 +137,13 @@ export default function CurtisOverlay({ message = "Curtis" }: CurtisOverlayProps
             <div className="flex items-center space-x-2">
               {/* Play/Pause toggle */}
               <OverlayButton
-                onClick={() => speechRecognition.toggleMic(handleSpeechResult)}
+                onClick={() => {
+                  // If overlay is collapsed and we're starting recording, expand it
+                  if (isCollapsed && !speechRecognition.micEnabled) {
+                    setIsCollapsed(false);
+                  }
+                  speechRecognition.toggleMic(handleSpeechResult);
+                }}
                 title="Toggle recording"
                 variant="compact"
                 className="overlay-icon hover:cursor-pointer"
@@ -176,71 +189,90 @@ export default function CurtisOverlay({ message = "Curtis" }: CurtisOverlayProps
           </div>
         </div>
         
-        {/* Detection display area */}
-        <div className="px-6 py-1">
-          <div className="text-xs text-gray-300 flex items-center justify-between">
-            <div className="flex-1 mr-2">
-              {speechRecognition.detectedText}
+        {/* Collapsible content */}
+        {!isCollapsed && (
+          <>
+            {/* Detection display area */}
+            <div className="px-6 pt-1 pb-3">
+              <div className="text-xs text-gray-300 flex items-center justify-between">
+                <div className="flex-1 mr-2">
+                  {speechRecognition.detectedText}
+                </div>
+                {speechRecognition.audioLevel > 5 && (
+                  <div className="flex items-center space-x-1">
+                    <div className="flex space-x-1">
+                      {[...Array(5)].map((_, i) => (
+                        <div
+                          key={i}
+                          className={`w-1 h-3 rounded-full transition-colors ${
+                            i < (speechRecognition.audioLevel / 20) ? 'bg-white' : 'bg-gray-600'
+                          }`}
+                        />
+                      ))}
+                    </div>
+                    <span className="text-xs text-white ml-1">{Math.round(speechRecognition.audioLevel)}%</span>
+                  </div>
+                )}
+              </div>
             </div>
-            {speechRecognition.audioLevel > 5 && (
-              <div className="flex items-center space-x-1">
-                <div className="flex space-x-1">
-                  {[...Array(5)].map((_, i) => (
-                    <div
-                      key={i}
-                      className={`w-1 h-3 rounded-full transition-colors ${
-                        i < (speechRecognition.audioLevel / 20) ? 'bg-white' : 'bg-gray-600'
-                      }`}
-                    />
-                  ))}
-                </div>
-                <span className="text-xs text-white ml-1">{Math.round(speechRecognition.audioLevel)}%</span>
-              </div>
-            )}
-          </div>
-        </div>
 
-        {/* Curtis Response area */}
-        {(conversation.isProcessing || conversation.curtisResponse) && (
-          <div className="px-6 py-1">
-            {conversation.isProcessing ? (
-              <div className="flex items-center space-x-2">
-                <div className="animate-spin rounded-full h-4 w-4 border-2 border-gray-600 border-t-white"></div>
-                <span className="text-xs text-gray-300">
-                  Curtis is thinking...
-                </span>
-              </div>
-            ) : (
-              <div>
-                <div 
-                  className="text-sm text-white max-h-40 overflow-y-auto relative scrollbar-hide"
-                  style={{
-                    scrollbarWidth: 'none', /* Firefox */
-                    msOverflowStyle: 'none',  /* Internet Explorer 10+ */
-                    maskImage: 'linear-gradient(to bottom, black 60%, transparent 100%)',
-                    WebkitMaskImage: 'linear-gradient(to bottom, black 60%, transparent 100%)'
-                  }}
-                >
-                  <style jsx>{`
-                    .scrollbar-hide::-webkit-scrollbar {
-                      display: none; /* Safari and Chrome */
-                    }
-                  `}</style>
-                  {conversation.curtisResponse}
-                </div>
+            {/* Curtis Response area */}
+            {(conversation.isProcessing || conversation.curtisResponse) && (
+              <div className="px-6 py-1 pb-2">
+                {conversation.isProcessing ? (
+                  <div className="flex items-center space-x-2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-gray-600 border-t-white"></div>
+                    <span className="text-xs text-gray-300">
+                      Curtis is thinking...
+                    </span>
+                  </div>
+                ) : (
+                  <div>
+                    <div 
+                      ref={(el) => {
+                        if (el) {
+                          const shouldFade = el.scrollHeight > el.clientHeight;
+                          if (shouldFade) {
+                            el.style.maskImage = 'linear-gradient(to bottom, black 80%, transparent 100%)';
+                            el.style.webkitMaskImage = 'linear-gradient(to bottom, black 80%, transparent 100%)';
+                          } else {
+                            el.style.maskImage = 'none';
+                            el.style.webkitMaskImage = 'none';
+                          }
+                        }
+                      }}
+                      className="text-sm text-white max-h-40 overflow-y-auto relative scrollbar-hide"
+                      style={{
+                        scrollbarWidth: 'none', /* Firefox */
+                        msOverflowStyle: 'none'  /* Internet Explorer 10+ */
+                      }}
+                    >
+                      <style jsx>{`
+                        .scrollbar-hide::-webkit-scrollbar {
+                          display: none; /* Safari and Chrome */
+                        }
+                      `}</style>
+                      <div>
+                        {conversation.curtisResponse}
+                        <br />
+                        <br />
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
-          </div>
-        )}
 
-        {/* Name Update Status */}
-        {userName.nameUpdateStatus && (
-          <div className="px-6 py-1 flex items-center space-x-2">
-            {userName.nameUpdateStatus.includes("Updating") && (
-              <div className="animate-spin rounded-full h-4 w-4"></div>
+            {/* Name Update Status */}
+            {userName.nameUpdateStatus && (
+              <div className="px-6 py-1 flex items-center space-x-2">
+                {userName.nameUpdateStatus.includes("Updating") && (
+                  <div className="animate-spin rounded-full h-4 w-4"></div>
+                )}
+                <span className="text-xs text-gray-300">{userName.nameUpdateStatus}</span>
+              </div>
             )}
-            <span className="text-xs text-gray-300">{userName.nameUpdateStatus}</span>
-          </div>
+          </>
         )}
       </div>
     </div>
