@@ -14,7 +14,7 @@ interface CurtisOverlayProps {
   message?: string;
 }
 
-export default function CurtisOverlay({ message = "Curtis" }: CurtisOverlayProps) {
+export default function CurtisOverlay({ message = "Curtis AI Advisor" }: CurtisOverlayProps) {
   const [contextPrompt, setContextPrompt] = useState("");
   const [lastDOMContext, setLastDOMContext] = useState<string | null>(null);
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -115,21 +115,21 @@ export default function CurtisOverlay({ message = "Curtis" }: CurtisOverlayProps
       <div className="bg-black/80 text-white rounded-xl shadow-2xl w-128" style={{ backgroundColor: 'var(--overlay-background)', color: 'var(--overlay-icon-color)' }}>
         {/* Main message area */}
         <div className="px-6 py-3 select-none rounded-t-xl">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between min-h-[2rem]">
             <div className="flex items-center space-x-3">
               <div 
                 className={`w-2 h-2 rounded-full ${speechRecognition.speechSupported ? 'bg-green-400' : 'bg-red-400'}`}
                 title={speechRecognition.speechSupported ? "Speech recognition supported" : "Speech recognition not supported"}
               />
               <span 
-                className="text-sm cursor-pointer hover:text-gray-200 transition-colors" 
+                className="text-sm cursor-pointer hover:text-gray-200 transition-colors leading-none" 
                 onClick={() => setIsCollapsed(!isCollapsed)}
                 title="Click to expand/collapse"
               >
                 {message}
               </span>
               {!speechRecognition.speechSupported && (
-                <span className="text-xs text-gray-300 ml-2">(Speech not supported)</span>
+                <span className="text-xs text-gray-300 ml-2 leading-none">(Speech not supported)</span>
               )}
             </div>
             
