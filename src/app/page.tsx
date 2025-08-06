@@ -1,17 +1,19 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import RBCHeader from '../components/RBCHeader';
 import RBCMainContent from '../components/RBCMainContent';
 import ViewToggle from '../components/ViewToggle';
 import CurtisOverlay from '../components/CurtisOverlay';
+import PermissionGate from '../components/PermissionGate';
 import SupportSettings from '../components/SupportSettings';
-import PageRouter from '../components/pages/PageRouter';
+import PageRouter, { PageType } from '../components/pages/PageRouter';
 
 export default function Home() {
   const [isMobile, setIsMobile] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSupportOpen, setIsSupportOpen] = useState(false);
+  const permissionResetRef = useRef<(() => void) | null>(null);
 
   const { currentPage, setCurrentPage, PageComponent } = PageRouter({ isMobile });
 
@@ -28,12 +30,17 @@ export default function Home() {
     setIsSupportOpen(!isSupportOpen);
   };
 
+  const handleNavigation = (page: string) => {
+    setCurrentPage(page as PageType);
+  };
+
   return (
     <div className={`min-h-screen bg-gray-50 ${isMobile ? 'max-w-sm mx-auto bg-white' : ''}`}>
       {/* Support Settings Panel - Only visible to advisors */}
       <SupportSettings 
         isOpen={isSupportOpen} 
         onToggle={handleSupportToggle}
+        onResetDemo={() => permissionResetRef.current?.()}
       />
 
       {/* View Toggle Button */}
@@ -42,8 +49,10 @@ export default function Home() {
         onToggle={handleViewToggle}
       />
 
-      {/* Curtis Assistant Overlay */}
-      <CurtisOverlay />
+      {/* Curtis Assistant Overlay with Permission Gate */}
+      <PermissionGate onResetRef={permissionResetRef}>
+        <CurtisOverlay />
+      </PermissionGate>
 
       {/* Main RBC Interface */}
       <div className={`${isSupportOpen ? 'ml-72' : ''} transition-all duration-300`}>
@@ -51,7 +60,7 @@ export default function Home() {
           isMobile={isMobile}
           onMenuToggle={handleMobileMenuToggle}
           isMobileMenuOpen={isMobileMenuOpen}
-          onNavigate={setCurrentPage}
+          onNavigate={handleNavigation}
         />
         
         <PageComponent isMobile={isMobile} onNavigate={setCurrentPage} />

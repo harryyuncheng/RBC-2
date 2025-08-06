@@ -1,13 +1,14 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useSpeechRecognition } from '../hooks/useSpeechRecognition';
-import { useScreenCapture } from '../hooks/useScreenCapture';
 import { useConversation } from '../hooks/useConversation';
 import { useUserName, parseNameFromSpeech } from '../hooks/useUserName';
 import { useDragAndDrop } from '../hooks/useDragAndDrop';
 import { captureDOMContext, loadContextPrompt } from '../utils/domContext';
 import { OverlayButton } from './ui/OverlayButton';
+import Icon from '@mdi/react';
+import { mdiArrowCollapse } from '@mdi/js';
 
 interface CurtisOverlayProps {
   message?: string;
@@ -15,19 +16,34 @@ interface CurtisOverlayProps {
 
 export default function CurtisOverlay({ message = "Curtis" }: CurtisOverlayProps) {
   const [contextPrompt, setContextPrompt] = useState("");
+  const [lastDOMContext, setLastDOMContext] = useState<string | null>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
 
   // Custom hooks
   const speechRecognition = useSpeechRecognition();
-  const screenCapture = useScreenCapture();
   const conversation = useConversation();
   const userName = useUserName();
-  const dragAndDrop = useDragAndDrop(overlayRef);
+  const dragAndDrop = useDragAndDrop(overlayRef as React.RefObject<HTMLDivElement>);
 
   // Initialize
   useEffect(() => {
     speechRecognition.checkSpeechSupport();
     loadContextPrompt().then(setContextPrompt);
+
+    // Clear context cache when URL changes
+    const currentUrl = window.location.href;
+    const handleUrlChange = () => {
+      if (window.location.href !== currentUrl) {
+        setLastDOMContext(null);
+      }
+    };
+
+    // Listen for navigation changes
+    window.addEventListener('popstate', handleUrlChange);
+    
+    // For SPA navigation, we could also listen for custom events
+    const handlePageChange = () => setLastDOMContext(null);
+    window.addEventListener('pagechange', handlePageChange);
 
     const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
       console.warn('Unhandled promise rejection:', event.reason);
@@ -42,11 +58,25 @@ export default function CurtisOverlay({ message = "Curtis" }: CurtisOverlayProps
     window.addEventListener('error', handleError);
 
     return () => {
+      window.removeEventListener('popstate', handleUrlChange);
+      window.removeEventListener('pagechange', handlePageChange);
       window.removeEventListener('unhandledrejection', handleUnhandledRejection);
       window.removeEventListener('error', handleError);
       speechRecognition.stopListening();
     };
   }, []);
+
+  // Capture DOM context 
+  const captureDOMContextIfNeeded = useCallback((forceNew: boolean = false): string | null => {
+    if (!forceNew && lastDOMContext) {
+      // Use cached context unless forced to refresh
+      return lastDOMContext;
+    }
+
+    const context = captureDOMContext();
+    setLastDOMContext(context);
+    return context;
+  }, [lastDOMContext]);
 
   // Handle speech results
   const handleSpeechResult = (text: string, isFinal: boolean) => {
@@ -57,20 +87,21 @@ export default function CurtisOverlay({ message = "Curtis" }: CurtisOverlayProps
       userName.updateUserName(nameInfo.firstName);
     }
 
-    const needsDOMContext = /\b(what's on this page|help me with this form|what can I do here|what are my options|read this page|page content|form fields)\b/i.test(text);
-    
     const totalExchanges = Math.floor(conversation.conversationHistory.length / 2);
     const isContextReinforcement = totalExchanges > 0 && totalExchanges % 5 === 0;
     
     if (isContextReinforcement) {
-      speechRecognition.setDetectedText(`Voice: "${text}" (Context reinforced for Curtis)`);
+      speechRecognition.setDetectedText(`Voice: "${text}" (Context refreshed for Curtis)`);
     }
+    
+    // Always capture fresh DOM context at the end of each voice recording
+    const domContext = captureDOMContextIfNeeded(true);
     
     conversation.sendToCurtis(
       text,
       contextPrompt,
-      screenCapture.lastScreenCapture,
-      needsDOMContext ? captureDOMContext() : null
+      null, // No screen capture
+      domContext
     );
   };
 
@@ -93,7 +124,7 @@ export default function CurtisOverlay({ message = "Curtis" }: CurtisOverlayProps
               className={`w-2 h-2 rounded-full ${speechRecognition.speechSupported ? 'bg-green-400' : 'bg-red-400'}`}
               title={speechRecognition.speechSupported ? "Speech recognition supported" : "Speech recognition not supported"}
             />
-            <span className="text-sm font-medium">{message}</span>
+            <span className="text-sm">{message}</span>
             {!speechRecognition.speechSupported && (
               <span className="text-xs text-gray-300 ml-2">(Speech not supported)</span>
             )}
@@ -105,11 +136,8 @@ export default function CurtisOverlay({ message = "Curtis" }: CurtisOverlayProps
           <div className="text-xs text-gray-300 flex items-center justify-between">
             <div className="flex-1 mr-2">
               {speechRecognition.detectedText}
-              {screenCapture.isCapturingScreen && (
-                <span className="ml-2 text-gray-300"> Capturing screen...</span>
-              )}
-              {!screenCapture.lastScreenCapture && (
-                <span className="ml-2 text-gray-400"> Click capture button for screen context</span>
+              {lastDOMContext && (
+                <span className="ml-2 text-gray-400"> Page context available</span>
               )}
             </div>
             {speechRecognition.audioLevel > 5 && (
@@ -138,15 +166,15 @@ export default function CurtisOverlay({ message = "Curtis" }: CurtisOverlayProps
                 <div className="animate-spin rounded-full h-4 w-4 border-2 border-gray-600 border-t-white"></div>
                 <span className="text-xs text-gray-300">
                   Curtis is thinking...
-                  {screenCapture.isCapturingScreen && ' (capturing screen)'}
+                  {lastDOMContext && ' (with page context)'}
                 </span>
               </div>
             ) : (
               <div>
                 <div className="text-xs text-gray-300 mb-1 flex items-center">
                   Curtis Response:
-                  {screenCapture.lastScreenCapture && (
-                    <span className="ml-2 text-gray-400 text-xs">📸 Screenshot included</span>
+                  {lastDOMContext && (
+                    <span className="ml-2 text-gray-400 text-xs">� Page context included</span>
                   )}
                 </div>
                 <div className="text-sm text-white max-h-40 overflow-y-auto">
@@ -170,41 +198,37 @@ export default function CurtisOverlay({ message = "Curtis" }: CurtisOverlayProps
         {/* Settings row at bottom */}
         <div className="px-4 py-2 flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            {/* Microphone toggle */}
+            {/* Play/Pause toggle */}
             <OverlayButton
               onClick={() => speechRecognition.toggleMic(handleSpeechResult)}
-              title="Toggle microphone"
+              title="Toggle recording"
               className={speechRecognition.micEnabled ? 'text-white' : 'text-gray-400'}
-              label={speechRecognition.micEnabled ? 'ON' : 'OFF'}
               icon={
                 speechRecognition.micEnabled ? (
-                  <path d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                  <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
                 ) : (
-                  <path d="M5.586 5.586A2 2 0 015 7v6a7 7 0 0012.0309 5.0309M12 19v4m0 0H8m4 0h4M9.879 9.879a3 3 0 004.242 4.242M15 11V5a3 3 0 00-6 0v.586M19 11c0 1.163-.282 2.261-.781 3.237" />
+                  <path d="M8 5v14l11-7z" />
                 )
               }
             />
 
-            {/* Manual screen capture button */}
-            <OverlayButton
-              onClick={async () => {
-                try {
-                  await screenCapture.captureScreen(true);
-                } catch (error) {
-                  console.warn('Manual screen capture failed:', error instanceof Error ? error.message : 'Unknown error');
-                  speechRecognition.setDetectedText("Screen capture failed - permission may be required");
+            {/* Clear context cache button */}
+            {lastDOMContext && (
+              <OverlayButton
+                onClick={() => {
+                  setLastDOMContext(null);
+                  speechRecognition.setDetectedText("Page context cache cleared");
+                }}
+                title="Clear context cache"
+                className="text-gray-400"
+                label="Clear"
+                icon={
+                  <>
+                    <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </>
                 }
-              }}
-              title="Capture screen (requires user permission)"
-              className={screenCapture.lastScreenCapture ? 'text-gray-300' : 'text-gray-400'}
-              label={screenCapture.isCapturingScreen ? 'Capturing...' : screenCapture.lastScreenCapture ? 'Captured' : 'Capture'}
-              icon={
-                <>
-                  <path d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                  <path d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                </>
-              }
-            />
+              />
+            )}
 
             {/* Clear conversation history button */}
             {conversation.conversationHistory.length > 0 && (
@@ -253,7 +277,7 @@ export default function CurtisOverlay({ message = "Curtis" }: CurtisOverlayProps
               variant="compact"
               className="text-gray-400"
               icon={
-                <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                <Icon path={mdiArrowCollapse} size={0.7} style={{ strokeWidth: '0.5px', filter: 'brightness(0.8)' }} />
               }
             />
           </div>

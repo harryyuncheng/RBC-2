@@ -5,9 +5,10 @@ import { useState, useEffect } from 'react';
 interface SupportSettingsProps {
   isOpen: boolean;
   onToggle: () => void;
+  onResetDemo?: () => void;
 }
 
-export default function SupportSettings({ isOpen, onToggle }: SupportSettingsProps) {
+export default function SupportSettings({ isOpen, onToggle, onResetDemo }: SupportSettingsProps) {
   const [micEnabled, setMicEnabled] = useState(true);
   const [currentStep, setCurrentStep] = useState(1);
   const [userData, setUserData] = useState({ user: { fullName: 'Loading...' } });
@@ -113,7 +114,10 @@ export default function SupportSettings({ isOpen, onToggle }: SupportSettingsPro
             <div>
               <h4 className="text-sm font-medium text-gray-300 mb-3">Quick Actions</h4>
               <div className="space-y-2">
-                <button className="w-full px-3 py-2 bg-blue-600 text-sm rounded hover:bg-blue-500 transition-colors">
+                <button 
+                  onClick={onResetDemo}
+                  className="w-full px-3 py-2 bg-blue-600 text-sm rounded hover:bg-blue-500 transition-colors"
+                >
                   Reset Demo
                 </button>
                 <button className="w-full px-3 py-2 bg-gray-700 text-sm rounded hover:bg-gray-600 transition-colors">

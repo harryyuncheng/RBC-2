@@ -9,6 +9,8 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@mdi/js": "^7.4.47",
+    "@mdi/react": "^1.6.1",
     "@types/sqlite3": "^3.1.11",
     "next": "15.4.5",
     "react": "19.1.0",
