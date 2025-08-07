@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { useUser } from '../context/UserContext';
 
 interface SupportSettingsProps {
   isOpen: boolean;
@@ -10,31 +11,7 @@ interface SupportSettingsProps {
 
 export default function SupportSettings({ isOpen, onToggle, onNewDemo }: SupportSettingsProps) {
   const [currentStep, setCurrentStep] = useState(1);
-  const [userData, setUserData] = useState({ user: { fullName: 'Harry' } }); // Start with default
-  const [isLoading, setIsLoading] = useState(false);
-
-  // Fetch user data when component mounts or becomes visible
-  useEffect(() => {
-    if (!isOpen) return; // Only fetch when panel is open to reduce unnecessary API calls
-    
-    const fetchUserData = async () => {
-      setIsLoading(true);
-      try {
-        const response = await fetch('/api/user');
-        if (response.ok) {
-          const data = await response.json();
-          setUserData(data);
-        }
-      } catch (error) {
-        console.error('Failed to fetch user data:', error);
-        // Keep the default values
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchUserData();
-  }, [isOpen]); // Only fetch when panel opens
+  const { userData, isLoading } = useUser();
 
   return (
     <>
@@ -112,7 +89,7 @@ export default function SupportSettings({ isOpen, onToggle, onNewDemo }: Support
               <h4 className="text-sm font-medium text-gray-300 mb-3">Session Info</h4>
               <div className="text-xs text-gray-400 space-y-1">
                 <div>Duration: 2:34</div>
-                <div>Customer: {userData.user.fullName}</div>
+                <div>Customer: {userData?.user.fullName || 'Loading...'}</div>
                 <div>Demo: Credit Score Check</div>
               </div>
             </div>

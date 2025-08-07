@@ -1,7 +1,8 @@
 'use client';
 
 import { PageType } from './pages/PageRouter';
-import { useState, useEffect, memo } from 'react';
+import { memo } from 'react';
+import { useUser } from '../context/UserContext';
 
 interface RBCMainContentProps {
   isMobile: boolean;
@@ -9,35 +10,7 @@ interface RBCMainContentProps {
 }
 
 const RBCMainContent = memo(function RBCMainContent({ isMobile, onNavigate }: RBCMainContentProps) {
-  const [userData, setUserData] = useState({ 
-    user: { 
-      firstName: 'Harry', // Start with a default name instead of Loading...
-      lastName: '', 
-      fullName: 'Harry' 
-    } 
-  });
-  const [isLoading, setIsLoading] = useState(false); // Separate loading state
-
-  // Fetch user data when component mounts
-  useEffect(() => {
-    const fetchUserData = async () => {
-      setIsLoading(true);
-      try {
-        const response = await fetch('/api/user');
-        if (response.ok) {
-          const data = await response.json();
-          setUserData(data);
-        }
-      } catch (error) {
-        console.error('Failed to fetch user data:', error);
-        // Keep the default values instead of setting fallback
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchUserData();
-  }, []);
+  const { userData, isLoading } = useUser();
 
   if (isMobile) {
     return (
@@ -45,7 +18,7 @@ const RBCMainContent = memo(function RBCMainContent({ isMobile, onNavigate }: RB
         {/* Hero Section */}
         <div className="banff-hero text-white relative">
           <div className="p-6 pt-8 relative z-10">
-            <h1 className="text-2xl font-bold mb-4 text-shadow-lg">Welcome back, {userData.user.firstName}</h1>
+            <h1 className="text-2xl font-bold mb-4 text-shadow-lg">Welcome back{userData?.user.firstName ? `, ${userData.user.firstName}` : ''}</h1>
           </div>
         </div>
 
@@ -179,7 +152,7 @@ const RBCMainContent = memo(function RBCMainContent({ isMobile, onNavigate }: RB
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
             <div>
               <h1 className="text-4xl lg:text-5xl font-bold mb-6 text-shadow-lg">
-                Welcome back, {userData.user.firstName}
+                Welcome back{userData?.user.firstName ? `, ${userData.user.firstName}` : ''}
               </h1>
               <p className="text-xl mb-8 text-white drop-shadow-lg">
                 Manage your finances with confidence. Your financial goals are within reach.
