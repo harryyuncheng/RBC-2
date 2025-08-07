@@ -3,7 +3,7 @@ import { useState, useRef, useCallback } from 'react';
 export const useSpeechRecognition = () => {
   const [micEnabled, setMicEnabled] = useState(false);
   const [isListening, setIsListening] = useState(false);
-  const [detectedText, setDetectedText] = useState("Click microphone to start voice detection");
+  const [detectedText, setDetectedText] = useState("Click the play button to start voice detection");
   const [audioLevel, setAudioLevel] = useState(0);
   const [speechSupported, setSpeechSupported] = useState(false);
   const [lastSpeechText, setLastSpeechText] = useState("");

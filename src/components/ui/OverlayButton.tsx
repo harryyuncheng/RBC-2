@@ -35,12 +35,12 @@ export function OverlayButton({
     <button
       onClick={handleClick}
       onMouseDown={(e) => e.stopPropagation()}
-      className={`${baseClasses} ${className} hover:bg-gray-700/50 transition-colors duration-200`}
+      className={`${baseClasses} ${className} transition-colors duration-200`}
       title={title}
       disabled={!enabled}
     >
       <svg 
-        className="w-4 h-4"
+        className="w-4 h-4 hover:text-white"
         viewBox="0 0 24 24"
         xmlns="http://www.w3.org/2000/svg"
         fill="none"

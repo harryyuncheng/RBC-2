@@ -40,7 +40,7 @@ export default function Home() {
       <SupportSettings 
         isOpen={isSupportOpen} 
         onToggle={handleSupportToggle}
-        onResetDemo={() => permissionResetRef.current?.()}
+        onNewDemo={() => permissionResetRef.current?.()}
       />
 
       {/* View Toggle Button */}

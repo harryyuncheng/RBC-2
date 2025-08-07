@@ -5,11 +5,10 @@ import { useState, useEffect } from 'react';
 interface SupportSettingsProps {
   isOpen: boolean;
   onToggle: () => void;
-  onResetDemo?: () => void;
+  onNewDemo?: () => void;
 }
 
-export default function SupportSettings({ isOpen, onToggle, onResetDemo }: SupportSettingsProps) {
-  const [micEnabled, setMicEnabled] = useState(true);
+export default function SupportSettings({ isOpen, onToggle, onNewDemo }: SupportSettingsProps) {
   const [currentStep, setCurrentStep] = useState(1);
   const [userData, setUserData] = useState({ user: { fullName: 'Harry' } }); // Start with default
   const [isLoading, setIsLoading] = useState(false);
@@ -68,26 +67,6 @@ export default function SupportSettings({ isOpen, onToggle, onResetDemo }: Suppo
           </div>
 
           <div className="space-y-6">
-            {/* Audio Settings */}
-            <div>
-              <h4 className="text-sm font-medium text-gray-300 mb-3">Audio</h4>
-              <div className="flex items-center justify-between">
-                <span className="text-sm">Microphone</span>
-                <button
-                  onClick={() => setMicEnabled(!micEnabled)}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                    micEnabled ? 'bg-blue-600' : 'bg-gray-600'
-                  }`}
-                >
-                  <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                      micEnabled ? 'translate-x-6' : 'translate-x-1'
-                    }`}
-                  />
-                </button>
-              </div>
-            </div>
-
             {/* Step Control */}
             <div>
               <h4 className="text-sm font-medium text-gray-300 mb-3">Manual Control</h4>
@@ -116,22 +95,16 @@ export default function SupportSettings({ isOpen, onToggle, onResetDemo }: Suppo
             </div>
 
             {/* Quick Actions */}
-            <div>
-              <h4 className="text-sm font-medium text-gray-300 mb-3">Quick Actions</h4>
-              <div className="space-y-2">
-                <button 
-                  onClick={onResetDemo}
-                  className="w-full px-3 py-2 bg-blue-600 text-sm rounded hover:bg-blue-500 transition-colors"
-                >
-                  Reset Demo
-                </button>
-                <button className="w-full px-3 py-2 bg-gray-700 text-sm rounded hover:bg-gray-600 transition-colors">
-                  Pause Session
-                </button>
-                <button className="w-full px-3 py-2 bg-red-600 text-sm rounded hover:bg-red-500 transition-colors">
-                  End Demo
-                </button>
-              </div>
+            <div className="space-y-2">
+              <button 
+                onClick={onNewDemo}
+                className="w-full px-3 py-2 bg-blue-600 text-sm rounded hover:bg-blue-500 transition-colors"
+              >
+                New Session
+              </button>
+              <button className="w-full px-3 py-2 bg-red-600 text-sm rounded hover:bg-red-500 transition-colors">
+                End Session
+              </button>
             </div>
 
             {/* Session Info */}
@@ -141,25 +114,6 @@ export default function SupportSettings({ isOpen, onToggle, onResetDemo }: Suppo
                 <div>Duration: 2:34</div>
                 <div>Customer: {userData.user.fullName}</div>
                 <div>Demo: Credit Score Check</div>
-              </div>
-            </div>
-
-            {/* Advisor Metrics */}
-            <div>
-              <h4 className="text-sm font-medium text-gray-300 mb-3">Advisor Metrics</h4>
-              <div className="text-xs text-gray-400 space-y-1">
-                <div className="flex justify-between">
-                  <span>Avg. Handling Time:</span>
-                  <span className="text-white">4:23</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Clients Resolved:</span>
-                  <span className="text-white">127</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Success Rate:</span>
-                  <span className="text-green-400">94.2%</span>
-                </div>
               </div>
             </div>
           </div>
