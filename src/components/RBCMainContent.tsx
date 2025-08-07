@@ -149,17 +149,11 @@ const RBCMainContent = memo(function RBCMainContent({ isMobile, onNavigate }: RB
       {/* Hero Section */}
       <div className="bg-cover bg-center bg-no-repeat text-white" style={{ backgroundImage: 'url(/banff.png)' }}>
         <div className="max-w-7xl mx-auto px-4 py-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-            <div>
-              <h1 className="text-4xl lg:text-5xl font-bold mb-6 text-shadow-lg">
-                Welcome back{userData?.user.firstName ? `, ${userData.user.firstName}` : ''}
-              </h1>
-              <p className="text-xl mb-8 text-white drop-shadow-lg">
-                Manage your finances with confidence. Your financial goals are within reach.
-              </p>
-            </div>
-            <div className="lg:text-right">
-              <div className="flex space-x-8 justify-end mt-24">
+          <div className="flex justify-between items-center mt-24">
+            <h1 className="text-4xl lg:text-5xl font-bold text-shadow-lg">
+              Welcome back{userData?.user.firstName ? `, ${userData.user.firstName}` : ''}
+            </h1>
+            <div className="flex space-x-8">
                 <div className="flex flex-col items-center space-y-2 cursor-pointer hover:opacity-80 transition-opacity">
                   <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
@@ -188,7 +182,6 @@ const RBCMainContent = memo(function RBCMainContent({ isMobile, onNavigate }: RB
                   <span className="text-sm font-medium text-white">Deposit</span>
                 </div>
               </div>
-            </div>
           </div>
         </div>
       </div>

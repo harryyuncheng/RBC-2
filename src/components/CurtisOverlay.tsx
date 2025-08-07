@@ -122,7 +122,7 @@ export default function CurtisOverlay({ message = "Curtis AI Advisor" }: CurtisO
                 title={speechRecognition.speechSupported ? "Speech recognition supported" : "Speech recognition not supported"}
               />
               <span 
-                className="text-sm cursor-pointer hover:text-gray-200 transition-colors leading-none" 
+                className="text-sm font-bold cursor-pointer text-gray-200 hover:text-white transition-colors leading-none" 
                 onClick={() => setIsCollapsed(!isCollapsed)}
                 title="Click to expand/collapse"
               >
