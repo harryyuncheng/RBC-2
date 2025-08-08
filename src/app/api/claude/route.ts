@@ -1,5 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+interface ConversationHistoryItem {
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp?: number;
+  hasScreenCapture?: boolean;
+  hasDOMContext?: boolean;
+}
+
 export async function POST(request: NextRequest) {
   try {
     console.log('Curtis API route called');
@@ -23,22 +31,23 @@ export async function POST(request: NextRequest) {
     console.log('API key found, length:', apiKey.length);
 
     // Build messages array with conversation history
-    const messages = [];
+    const messages: any[] = [];
 
     // Add conversation history first (if any)
-    if (conversationHistory && conversationHistory.length > 0) {
-      console.log('Adding conversation history with', conversationHistory.length, 'items');
+    if (conversationHistory && (conversationHistory as ConversationHistoryItem[]).length > 0) {
+      const typedHistory = conversationHistory as ConversationHistoryItem[];
+      console.log('Adding conversation history with', typedHistory.length, 'items');
       
       // If we have a lot of history, include a summary at the beginning
-      if (conversationHistory.length > 20) {
-        const recentHistory = conversationHistory.slice(-20); // Last 20 messages
-        const olderHistory = conversationHistory.slice(0, -20);
+      if (typedHistory.length > 20) {
+        const recentHistory = typedHistory.slice(-20); // Last 20 messages
+        const olderHistory = typedHistory.slice(0, -20);
         
         // Create a summary of older conversation
-        const userMessages = olderHistory.filter(item => item.role === 'user').length;
-        const assistantMessages = olderHistory.filter(item => item.role === 'assistant').length;
-        const hasScreenCaptures = olderHistory.some(item => item.hasScreenCapture);
-        const hasDOMContext = olderHistory.some(item => item.hasDOMContext);
+        const userMessages = olderHistory.filter((item: ConversationHistoryItem) => item.role === 'user').length;
+        const assistantMessages = olderHistory.filter((item: ConversationHistoryItem) => item.role === 'assistant').length;
+        const hasScreenCaptures = olderHistory.some((item: ConversationHistoryItem) => item.hasScreenCapture);
+        const hasDOMContext = olderHistory.some((item: ConversationHistoryItem) => item.hasDOMContext);
         
         const conversationSummary = `[Previous conversation context: ${userMessages} user messages and ${assistantMessages} assistant responses${hasScreenCaptures ? ', included screen captures' : ''}${hasDOMContext ? ', included page context' : ''}. This conversation continues below.]`;
         
@@ -59,13 +68,13 @@ export async function POST(request: NextRequest) {
           }
         } else {
           // Add summary as first message
-          messages.push({
-            role: 'user',
-            content: conversationSummary
-          });
+            messages.push({
+              role: 'user',
+              content: conversationSummary
+            });
           
           // Add recent history
-          recentHistory.forEach(item => {
+          recentHistory.forEach((item: ConversationHistoryItem) => {
             messages.push({
               role: item.role,
               content: item.content
@@ -77,7 +86,7 @@ export async function POST(request: NextRequest) {
         // Add context prompt as system context at the beginning if we have history
         if (contextPrompt) {
           // For the first message, include the context prompt
-          const firstHistoryItem = conversationHistory[0];
+          const firstHistoryItem = typedHistory[0];
           if (firstHistoryItem.role === 'user') {
             messages.push({
               role: 'user',
@@ -85,8 +94,8 @@ export async function POST(request: NextRequest) {
             });
             
             // Add the rest of the history
-            for (let i = 1; i < conversationHistory.length; i++) {
-              const item = conversationHistory[i];
+            for (let i = 1; i < typedHistory.length; i++) {
+              const item = typedHistory[i];
               messages.push({
                 role: item.role,
                 content: item.content
@@ -100,7 +109,7 @@ export async function POST(request: NextRequest) {
             });
             
             // Add all history
-            conversationHistory.forEach(item => {
+            typedHistory.forEach((item: ConversationHistoryItem) => {
               messages.push({
                 role: item.role,
                 content: item.content
@@ -109,7 +118,7 @@ export async function POST(request: NextRequest) {
           }
         } else {
           // No context prompt, just add history
-          conversationHistory.forEach(item => {
+          typedHistory.forEach((item: ConversationHistoryItem) => {
             messages.push({
               role: item.role,
               content: item.content
@@ -120,17 +129,17 @@ export async function POST(request: NextRequest) {
     }
 
     // Build current message content
-    const currentMessageContent = [];
+    const currentMessageContent: any[] = [];
     
     // Add current voice input and context
-    let textContent = voiceInput;
+    let textContent = voiceInput as string;
     
     // If this is the first message and no history, include context prompt
     if (messages.length === 0 && contextPrompt) {
       textContent = `${contextPrompt}\n\n[This is the start of a conversation with a user who is currently on the RBC website/app]\n\nUser voice input: ${voiceInput}`;
     } else {
       // For ongoing conversations, periodically remind Curtis of context
-      const totalExchanges = conversationHistory ? Math.floor(conversationHistory.length / 2) : 0;
+      const totalExchanges = (conversationHistory ? Math.floor((conversationHistory as ConversationHistoryItem[]).length / 2) : 0);
       const shouldReinforceContext = totalExchanges > 0 && totalExchanges % 3 === 0; // Every 3 exchanges (more frequent)
       
       if (shouldReinforceContext && contextPrompt) {
@@ -153,7 +162,7 @@ export async function POST(request: NextRequest) {
     // Add screen capture if provided
     if (screenCapture) {
       // Extract base64 data (remove data:image/jpeg;base64, prefix)
-      const base64Data = screenCapture.split(',')[1];
+      const base64Data = (screenCapture as string).split(',')[1];
       currentMessageContent.push({
         type: 'image',
         source: {
@@ -198,8 +207,28 @@ export async function POST(request: NextRequest) {
     }
 
     console.log('Curtis API response successful');
-    const data = await response.json();
+    const data: any = await response.json();
     console.log('Response data structure:', Object.keys(data));
+    // BEGIN added raw output logging
+    try {
+      const rawTextParts = Array.isArray(data.content) ? data.content.map((c: any, idx: number) => {
+        if (c && typeof c === 'object') {
+          if (typeof c.text === 'string') return `[#${idx} type=${c.type || 'text'}]\n${c.text}`;
+          if (c.type === 'tool_result') return `[#${idx} tool_result]\n${JSON.stringify(c, null, 2)}`;
+          return `[#${idx}] ${JSON.stringify(c).slice(0,500)}`;
+        }
+        return `[#${idx}] (non-object) ${String(c)}`;
+      }) : ['<No content array in response>'];
+      const fullCombined = rawTextParts.join('\n\n');
+      const preview = fullCombined.length > 20000 ? fullCombined.slice(0,20000) + '\n...[truncated for log]...' : fullCombined;
+      console.log('----- Curtis FULL RAW OUTPUT START -----');
+      console.log(preview);
+      console.log('----- Curtis FULL RAW OUTPUT END -----');
+      if (data.usage) console.log('Curtis usage metrics:', data.usage);
+    } catch (logErr) {
+      console.warn('Failed to log full raw Curtis output:', logErr);
+    }
+    // END added raw output logging
     
     return NextResponse.json({ 
       response: data.content[0].text,

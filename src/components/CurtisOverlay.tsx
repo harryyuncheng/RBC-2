@@ -104,35 +104,20 @@ export default function CurtisOverlay({ message = "Curtis AI Advisor" }: CurtisO
   const renderFormattedResponse = useCallback((text: string) => {
     if (!text) return null;
     const lines = text.split('\n');
-    const boldRegex = /\*\*(.+?)\*\*/g; // non-greedy
+    const boldRegex = /\*\*(.+?)\*\*/g;
     return lines.map((line, idx) => {
-      if (line === '') {
-        return <div key={idx} className="h-2" />; // preserve blank line spacing
-      }
       const parts: (string | React.ReactNode)[] = [];
       let lastIndex = 0;
       let match: RegExpExecArray | null;
       while ((match = boldRegex.exec(line)) !== null) {
-        if (match.index > lastIndex) {
-          parts.push(line.slice(lastIndex, match.index));
-        }
+        if (match.index > lastIndex) parts.push(line.slice(lastIndex, match.index));
         parts.push(<span key={`${idx}-b-${match.index}`} className="font-semibold">{match[1]}</span>);
         lastIndex = match.index + match[0].length;
       }
-      if (lastIndex < line.length) {
-        parts.push(line.slice(lastIndex));
-      }
-
-      // Bullet styling (lines starting with - )
-      const bullet = /^\s*-\s+/.test(line);
+      if (lastIndex < line.length) parts.push(line.slice(lastIndex));
+      // Preserve bullet indicator visually but no extra spacing manipulation
       return (
-        <div
-          key={idx}
-          className={bullet ? 'pl-2 relative' : ''}
-          style={bullet ? { paddingLeft: '0.5rem' } : undefined}
-        >
-          {parts.length ? parts : '\u00A0'}
-        </div>
+        <span key={idx} className="block">{parts.length ? parts : '\u00A0'}</span>
       );
     });
   }, []);
