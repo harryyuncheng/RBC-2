@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useSpeechRecognition } from '../hooks/useSpeechRecognition';
 import { useConversation } from '../hooks/useConversation';
 import { useUserName, parseNameFromSpeech } from '../hooks/useUserName';
@@ -100,6 +100,42 @@ export default function CurtisOverlay({ message = "Curtis AI Advisor" }: CurtisO
       domContext
     );
   };
+
+  const renderFormattedResponse = useCallback((text: string) => {
+    if (!text) return null;
+    const lines = text.split('\n');
+    const boldRegex = /\*\*(.+?)\*\*/g; // non-greedy
+    return lines.map((line, idx) => {
+      if (line === '') {
+        return <div key={idx} className="h-2" />; // preserve blank line spacing
+      }
+      const parts: (string | React.ReactNode)[] = [];
+      let lastIndex = 0;
+      let match: RegExpExecArray | null;
+      while ((match = boldRegex.exec(line)) !== null) {
+        if (match.index > lastIndex) {
+          parts.push(line.slice(lastIndex, match.index));
+        }
+        parts.push(<span key={`${idx}-b-${match.index}`} className="font-semibold">{match[1]}</span>);
+        lastIndex = match.index + match[0].length;
+      }
+      if (lastIndex < line.length) {
+        parts.push(line.slice(lastIndex));
+      }
+
+      // Bullet styling (lines starting with - )
+      const bullet = /^\s*-\s+/.test(line);
+      return (
+        <div
+          key={idx}
+          className={bullet ? 'pl-2 relative' : ''}
+          style={bullet ? { paddingLeft: '0.5rem' } : undefined}
+        >
+          {parts.length ? parts : '\u00A0'}
+        </div>
+      );
+    });
+  }, []);
 
   return (
     <div 
@@ -242,19 +278,17 @@ export default function CurtisOverlay({ message = "Curtis AI Advisor" }: CurtisO
                         }
                       }
                     }}
-                    className="text-sm text-white max-h-40 overflow-y-auto relative scrollbar-hide"
+                    className="text-sm text-white max-h-40 overflow-y-auto relative scrollbar-hide whitespace-pre-wrap"
                     style={{
-                      scrollbarWidth: 'none', /* Firefox */
-                      msOverflowStyle: 'none'  /* Internet Explorer 10+ */
+                      scrollbarWidth: 'none',
+                      msOverflowStyle: 'none'
                     }}
                   >
                     <style jsx>{`
-                      .scrollbar-hide::-webkit-scrollbar {
-                        display: none; /* Safari and Chrome */
-                      }
+                      .scrollbar-hide::-webkit-scrollbar { display: none; }
                     `}</style>
-                    <div>
-                      {conversation.curtisResponse}
+                    <div className="space-y-1">
+                      {renderFormattedResponse(conversation.curtisResponse)}
                       <br />
                       <br />
                     </div>
