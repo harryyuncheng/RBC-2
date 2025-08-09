@@ -51,7 +51,6 @@ Avoid overwhelming with lists; keep momentum.
 - Each actionable or informational step on its own line starting with a dash only if it represents a discrete step; narrative reassurance may be plain lines.
 - Use bold sparingly for website features (e.g., **Loans and Lines of Credit**, **Personal**)
 - Use inline code only for literal field/label names if necessary
-- Escape dollar signs as \$ when representing currency
 - No raw JSON except optional ACTIONS array (if included)
 - No self-referential or system meta statements
 </formatting_rules>
