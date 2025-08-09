@@ -4,19 +4,12 @@ interface ConversationHistoryItem {
   role: 'user' | 'assistant';
   content: string;
   timestamp?: number;
-  hasScreenCapture?: boolean;
   hasDOMContext?: boolean;
 }
 
 export async function POST(request: NextRequest) {
   try {
-    console.log('Curtis API route called');
-    const { voiceInput, contextPrompt, screenCapture, domContext, conversationHistory } = await request.json();
-    console.log('Voice input:', voiceInput);
-    console.log('Context prompt length:', contextPrompt?.length || 0);
-    console.log('Screen capture provided:', !!screenCapture);
-    console.log('DOM context provided:', !!domContext);
-    console.log('Conversation history items:', conversationHistory?.length || 0);
+    const { voiceInput, contextPrompt, domContext, conversationHistory } = await request.json();
 
     if (!voiceInput) {
       return NextResponse.json({ error: 'Voice input is required' }, { status: 400 });
@@ -27,8 +20,6 @@ export async function POST(request: NextRequest) {
       console.error('No API key found in environment');
       return NextResponse.json({ error: 'Curtis API key not configured' }, { status: 500 });
     }
-    
-    console.log('API key found, length:', apiKey.length);
 
     // Build messages array with conversation history
     const messages: any[] = [];
@@ -36,8 +27,7 @@ export async function POST(request: NextRequest) {
     // Add conversation history first (if any)
     if (conversationHistory && (conversationHistory as ConversationHistoryItem[]).length > 0) {
       const typedHistory = conversationHistory as ConversationHistoryItem[];
-      console.log('Adding conversation history with', typedHistory.length, 'items');
-      
+
       // If we have a lot of history, include a summary at the beginning
       if (typedHistory.length > 20) {
         const recentHistory = typedHistory.slice(-20); // Last 20 messages
@@ -46,10 +36,9 @@ export async function POST(request: NextRequest) {
         // Create a summary of older conversation
         const userMessages = olderHistory.filter((item: ConversationHistoryItem) => item.role === 'user').length;
         const assistantMessages = olderHistory.filter((item: ConversationHistoryItem) => item.role === 'assistant').length;
-        const hasScreenCaptures = olderHistory.some((item: ConversationHistoryItem) => item.hasScreenCapture);
         const hasDOMContext = olderHistory.some((item: ConversationHistoryItem) => item.hasDOMContext);
         
-        const conversationSummary = `[Previous conversation context: ${userMessages} user messages and ${assistantMessages} assistant responses${hasScreenCaptures ? ', included screen captures' : ''}${hasDOMContext ? ', included page context' : ''}. This conversation continues below.]`;
+        const conversationSummary = `[Previous conversation context: ${userMessages} user messages and ${assistantMessages} assistant responses${hasDOMContext ? ', included page context' : ''}. This conversation continues below.]`;
         
         // Add context prompt with summary for long conversations
         if (contextPrompt) {
@@ -68,10 +57,10 @@ export async function POST(request: NextRequest) {
           }
         } else {
           // Add summary as first message
-            messages.push({
-              role: 'user',
-              content: conversationSummary
-            });
+          messages.push({
+            role: 'user',
+            content: conversationSummary
+          });
           
           // Add recent history
           recentHistory.forEach((item: ConversationHistoryItem) => {
@@ -159,27 +148,11 @@ export async function POST(request: NextRequest) {
       text: textContent
     });
 
-    // Add screen capture if provided
-    if (screenCapture) {
-      // Extract base64 data (remove data:image/jpeg;base64, prefix)
-      const base64Data = (screenCapture as string).split(',')[1];
-      currentMessageContent.push({
-        type: 'image',
-        source: {
-          type: 'base64',
-          media_type: 'image/jpeg',
-          data: base64Data
-        }
-      });
-    }
-
     // Add current message to messages array
     messages.push({
       role: 'user',
       content: currentMessageContent
     });
-
-    console.log('Total messages in conversation:', messages.length);
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -206,30 +179,17 @@ export async function POST(request: NextRequest) {
       }, { status: response.status });
     }
 
-    console.log('Curtis API response successful');
     const data: any = await response.json();
-    console.log('Response data structure:', Object.keys(data));
-    // BEGIN added raw output logging
+
+    // Minimal logging: log the uncensored Claude output content as returned by API
     try {
-      const rawTextParts = Array.isArray(data.content) ? data.content.map((c: any, idx: number) => {
-        if (c && typeof c === 'object') {
-          if (typeof c.text === 'string') return `[#${idx} type=${c.type || 'text'}]\n${c.text}`;
-          if (c.type === 'tool_result') return `[#${idx} tool_result]\n${JSON.stringify(c, null, 2)}`;
-          return `[#${idx}] ${JSON.stringify(c).slice(0,500)}`;
-        }
-        return `[#${idx}] (non-object) ${String(c)}`;
-      }) : ['<No content array in response>'];
-      const fullCombined = rawTextParts.join('\n\n');
-      const preview = fullCombined.length > 20000 ? fullCombined.slice(0,20000) + '\n...[truncated for log]...' : fullCombined;
-      console.log('----- Curtis FULL RAW OUTPUT START -----');
-      console.log(preview);
-      console.log('----- Curtis FULL RAW OUTPUT END -----');
-      if (data.usage) console.log('Curtis usage metrics:', data.usage);
-    } catch (logErr) {
-      console.warn('Failed to log full raw Curtis output:', logErr);
-    }
-    // END added raw output logging
-    
+      const rawTextParts = Array.isArray(data.content)
+        ? data.content.map((c: any) => (c && typeof c === 'object' && typeof c.text === 'string') ? c.text : '')
+        : [];
+      const fullCombined = rawTextParts.filter(Boolean).join('\n\n');
+      if (fullCombined) console.log('Curtis raw API output:', fullCombined);
+    } catch { /* no-op */ }
+
     return NextResponse.json({ 
       response: data.content[0].text,
       usage: data.usage 

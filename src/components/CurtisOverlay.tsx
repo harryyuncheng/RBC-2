@@ -96,7 +96,6 @@ export default function CurtisOverlay({ message = "Curtis AI Advisor" }: CurtisO
     conversation.sendToCurtis(
       text,
       contextPrompt,
-      null, // No screen capture
       domContext
     );
   };

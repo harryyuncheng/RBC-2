@@ -4,7 +4,6 @@ interface ConversationMessage {
   role: 'user' | 'assistant';
   content: string;
   timestamp: number;
-  hasScreenCapture?: boolean;
   hasDOMContext?: boolean;
 }
 
@@ -40,38 +39,29 @@ export const useConversation = () => {
   const sendToCurtis = useCallback(async (
     voiceText: string,
     contextPrompt: string,
-    screenCapture: string | null = null,
     domContext: string | null = null
   ) => {
     if (!voiceText.trim()) return;
-    console.log('Sending to Curtis:', { voiceText, hasScreenCapture: !!screenCapture, hasDOMContext: !!domContext });
+    // Minimal logging requested
+    console.log('Voice input:', voiceText);
     setIsProcessing(true);
     setCurtisResponse("");
     try {
-      console.log('Sending request to Curtis API with:', {
-        hasVoiceInput: !!voiceText,
-        hasContextPrompt: !!contextPrompt,
-        hasScreenCapture: !!screenCapture,
-        hasDOMContext: !!domContext,
-        conversationHistoryLength: conversationHistory.length,
-        totalExchanges: Math.floor(conversationHistory.length / 2),
-        willReinforceContext: conversationHistory.length > 0 && Math.floor(conversationHistory.length / 2) % 5 === 0
-      });
       const response = await fetch('/api/claude', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           voiceInput: voiceText,
           contextPrompt: contextPrompt,
-          screenCapture: screenCapture,
           domContext: domContext,
           conversationHistory: conversationHistory
         })
       });
       const data = await response.json();
       if (response.ok) {
-        console.log('Curtis responded successfully');
         const rawResponseText: string = data.response || '';
+        // Minimal logging requested
+        console.log('Curtis raw response:', rawResponseText);
         const cleanedScript = extractAdvisorScript(rawResponseText);
         setCurtisResponse(cleanedScript);
         setConversationHistory(prev => {
@@ -81,7 +71,6 @@ export const useConversation = () => {
               role: 'user',
               content: voiceText,
               timestamp: Date.now(),
-              hasScreenCapture: !!screenCapture,
               hasDOMContext: !!domContext
             },
             {
@@ -93,11 +82,9 @@ export const useConversation = () => {
           return newHistory.slice(-40);
         });
       } else {
-        console.warn('Curtis API error:', data.error || 'Unknown API error');
         setCurtisResponse(`Error: ${data.error || 'Unknown API error'}`);
       }
     } catch (error) {
-      console.warn('Failed to send to Curtis:', error instanceof Error ? error.message : 'Unknown error');
       setCurtisResponse(`Failed to connect to Curtis API: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setIsProcessing(false);
