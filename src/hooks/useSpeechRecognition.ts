@@ -64,6 +64,9 @@ export const useSpeechRecognition = () => {
         return;
       }
 
+      // Set micEnabled to true when starting to listen
+      setMicEnabled(true);
+
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
 
@@ -147,6 +150,7 @@ export const useSpeechRecognition = () => {
   const stopListening = useCallback(() => {
     setIsListening(false);
     setAudioLevel(0);
+    setMicEnabled(false); // Explicitly set micEnabled to false when stopping
 
     try {
       if (recognitionRef.current) {
@@ -193,6 +197,7 @@ export const useSpeechRecognition = () => {
     lastSpeechText,
     checkSpeechSupport,
     toggleMic,
+    startListening,
     stopListening,
     setDetectedText
   };

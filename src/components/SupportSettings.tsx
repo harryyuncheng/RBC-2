@@ -1,7 +1,5 @@
 'use client';
 
-import { useState } from 'react';
-import { useUser } from '../context/UserContext';
 
 interface SupportSettingsProps {
   isOpen: boolean;
@@ -10,8 +8,6 @@ interface SupportSettingsProps {
 }
 
 export default function SupportSettings({ isOpen, onToggle, onNewDemo }: SupportSettingsProps) {
-  const [currentStep, setCurrentStep] = useState(1);
-  const { userData, isLoading } = useUser();
 
   return (
     <>
@@ -44,54 +40,13 @@ export default function SupportSettings({ isOpen, onToggle, onNewDemo }: Support
           </div>
 
           <div className="space-y-6">
-            {/* Step Control */}
-            <div>
-              <h4 className="text-sm font-medium text-gray-300 mb-3">Manual Control</h4>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm">Current Step</span>
-                  <span className="text-sm font-medium">{currentStep}/5</span>
-                </div>
-                <div className="flex space-x-2">
-                  <button
-                    onClick={() => setCurrentStep(Math.max(1, currentStep - 1))}
-                    disabled={currentStep === 1}
-                    className="flex-1 px-3 py-2 bg-gray-700 text-sm rounded hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Previous
-                  </button>
-                  <button
-                    onClick={() => setCurrentStep(Math.min(5, currentStep + 1))}
-                    disabled={currentStep === 5}
-                    className="flex-1 px-3 py-2 bg-gray-700 text-sm rounded hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Next
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Quick Actions */}
             <div className="space-y-2">
               <button 
                 onClick={onNewDemo}
                 className="w-full px-3 py-2 bg-blue-600 text-sm rounded hover:bg-blue-500 transition-colors"
               >
-                New Session
+                Restart Application
               </button>
-              <button className="w-full px-3 py-2 bg-red-600 text-sm rounded hover:bg-red-500 transition-colors">
-                End Session
-              </button>
-            </div>
-
-            {/* Session Info */}
-            <div>
-              <h4 className="text-sm font-medium text-gray-300 mb-3">Session Info</h4>
-              <div className="text-xs text-gray-400 space-y-1">
-                <div>Duration: 2:34</div>
-                <div>Customer: {userData?.user.fullName || 'Loading...'}</div>
-                <div>Demo: Credit Score Check</div>
-              </div>
             </div>
           </div>
         </div>

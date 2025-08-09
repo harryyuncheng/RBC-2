@@ -5,10 +5,13 @@ import { useSpeechRecognition } from '../hooks/useSpeechRecognition';
 import { useConversation } from '../hooks/useConversation';
 import { useUserName, parseNameFromSpeech } from '../hooks/useUserName';
 import { useDragAndDrop } from '../hooks/useDragAndDrop';
+import { useSessionControl } from '../hooks/useSessionControl';
 import { captureDOMContext, loadContextPrompt } from '../utils/domContext';
 import { OverlayButton } from './ui/OverlayButton';
+import { SessionButton } from './ui/SessionButton';
+import { EndSessionButton } from './ui/EndSessionButton';
 import Icon from '@mdi/react';
-import { mdiArrowCollapse, mdiBackspace } from '@mdi/js';
+import { mdiArrowCollapse } from '@mdi/js';
 
 interface CurtisOverlayProps {
   message?: string;
@@ -24,6 +27,7 @@ export default function CurtisOverlay({ message = "Curtis AI Advisor" }: CurtisO
   const speechRecognition = useSpeechRecognition();
   const conversation = useConversation();
   const userName = useUserName();
+  const sessionControl = useSessionControl();
   const dragAndDrop = useDragAndDrop(overlayRef as React.RefObject<HTMLDivElement>);
 
   // Initialize
@@ -67,6 +71,20 @@ export default function CurtisOverlay({ message = "Curtis AI Advisor" }: CurtisO
     };
   }, []);
 
+  // Sync microphone state with session state (but don't interfere with immediate user actions)
+  useEffect(() => {
+    // Only sync if session has been inactive for a bit to avoid interfering with user actions
+    if (!sessionControl.sessionState.isActive && speechRecognition.micEnabled) {
+      const timer = setTimeout(() => {
+        if (!sessionControl.sessionState.isActive && speechRecognition.micEnabled) {
+          speechRecognition.stopListening();
+        }
+      }, 100); // Small delay to avoid interfering with immediate button clicks
+      
+      return () => clearTimeout(timer);
+    }
+  }, [sessionControl.sessionState.isActive, speechRecognition.micEnabled]);
+
   // Capture DOM context - always get the latest context for each recording
   const captureDOMContextForRecording = useCallback((): string => {
     const context = captureDOMContext();
@@ -87,11 +105,16 @@ export default function CurtisOverlay({ message = "Curtis AI Advisor" }: CurtisO
     const isContextReinforcement = totalExchanges > 0 && totalExchanges % 5 === 0;
     
     if (isContextReinforcement) {
-      speechRecognition.setDetectedText(`Voice: "${text}" (Context refreshed for Curtis)`);
+      speechRecognition.setDetectedText(`${text} (Context refreshed for Curtis)`);
     }
     
     // Always capture fresh DOM context for every recording
     const domContext = captureDOMContextForRecording();
+    
+    // Ensure session is active when sending messages
+    if (!sessionControl.sessionState.isActive) {
+      sessionControl.startSession();
+    }
     
     conversation.sendToCurtis(
       text,
@@ -132,21 +155,25 @@ export default function CurtisOverlay({ message = "Curtis AI Advisor" }: CurtisO
       }}
       onMouseDown={dragAndDrop.handleMouseDown}
     >
-      <div className="bg-black/80 text-white rounded-xl shadow-2xl w-128" style={{ backgroundColor: 'var(--overlay-background)', color: 'var(--overlay-icon-color)' }}>
+      <div className="bg-black/80 text-white border border-white/30 rounded-xl shadow-2xl w-136" style={{ backgroundColor: 'var(--overlay-background)', color: 'var(--overlay-icon-color)' }}>
         {/* Main message area */}
         <div className="px-6 py-3 select-none rounded-t-xl">
           <div className="flex items-center justify-between min-h-[2rem]">
             <div className="flex items-center space-x-3">
-              <div 
-                className={`w-2 h-2 rounded-full ${speechRecognition.speechSupported ? 'bg-green-400' : 'bg-red-400'}`}
-                title={speechRecognition.speechSupported ? "Speech recognition supported" : "Speech recognition not supported"}
-              />
+              {conversation.isProcessing ? (
+                <div className="animate-spin rounded-full h-2 w-2 border border-gray-600 border-t-white"></div>
+              ) : (
+                <div 
+                  className={`w-2 h-2 rounded-full ${speechRecognition.speechSupported ? 'bg-green-400' : 'bg-red-400'}`}
+                  title={speechRecognition.speechSupported ? "Speech recognition supported" : "Speech recognition not supported"}
+                />
+              )}
               <span 
                 className="text-sm font-bold cursor-pointer text-gray-200 hover:text-white transition-colors leading-none" 
                 onClick={() => setIsCollapsed(!isCollapsed)}
                 title="Click to expand/collapse"
               >
-                {message}
+                {conversation.isProcessing ? "Curtis is thinking..." : message}
               </span>
               {!speechRecognition.speechSupported && (
                 <span className="text-xs text-gray-300 ml-2 leading-none">(Speech not supported)</span>
@@ -155,44 +182,63 @@ export default function CurtisOverlay({ message = "Curtis AI Advisor" }: CurtisO
             
             {/* Control buttons */}
             <div className="flex items-center space-x-2">
-              {/* Play/Pause toggle */}
-              <OverlayButton
+              {/* Session Control Button */}
+              <SessionButton
+                isActive={sessionControl.sessionState.isActive}
                 onClick={() => {
-                  // If overlay is collapsed and we're starting recording, expand it
-                  if (isCollapsed && !speechRecognition.micEnabled) {
-                    setIsCollapsed(false);
+                  // Immediately handle session state to prevent blocking
+                  const currentlyActive = sessionControl.sessionState.isActive;
+                  
+                  if (currentlyActive) {
+                    // Pausing session - stop microphone immediately
+                    if (speechRecognition.micEnabled) {
+                      speechRecognition.stopListening();
+                    }
+                    // Pause session immediately
+                    sessionControl.pauseSession();
+                  } else {
+                    // Starting session
+                    // If overlay is collapsed, expand it
+                    if (isCollapsed) {
+                      setIsCollapsed(false);
+                    }
+                    
+                    // Start session immediately
+                    sessionControl.startSession();
+                    
+                    // Always start microphone when resuming/starting session
+                    if (!speechRecognition.micEnabled) {
+                      speechRecognition.startListening(handleSpeechResult);
+                    }
                   }
-                  speechRecognition.toggleMic(handleSpeechResult);
                 }}
-                title="Toggle recording"
-                variant="compact"
+                buttonText={sessionControl.getButtonText()}
                 className="overlay-icon hover:cursor-pointer"
-                icon={
-                  speechRecognition.micEnabled ? (
-                    <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" fill="currentColor" />
-                  ) : (
-                    <path d="M8 5v14l11-7z" fill="currentColor" />
-                  )
-                }
               />
 
-              {/* Clear button */}
-              <OverlayButton
+              {/* Clear/End Session button */}
+              <EndSessionButton
                 onClick={() => {
                   if (lastDOMContext) {
                     setLastDOMContext(null);
-                    speechRecognition.setDetectedText("Page context cache cleared");
                   }
                   if (conversation.conversationHistory.length > 0) {
                     conversation.clearConversationHistory();
                   }
+                  // Reset session state
+                  sessionControl.resetSession();
+                  // Stop microphone if active
+                  if (speechRecognition.micEnabled) {
+                    speechRecognition.stopListening();
+                  }
+                  // Briefly show session ended message, then reset to default
+                  speechRecognition.setDetectedText("Session successfully ended");
+                  setTimeout(() => {
+                    speechRecognition.setDetectedText("Click the play button to start voice detection");
+                  }, 1200);
                 }}
-                title="Clear context cache and conversation history"
-                variant="compact"
-                className="overlay-icon hover:cursor-pointer"
-                icon={
-                  <Icon path={mdiBackspace} size={0.7} style={{ strokeWidth: '0px' }} />
-                }
+                className={`overlay-icon ${sessionControl.getButtonText() === 'Begin Session' ? 'opacity-50' : 'hover:cursor-pointer'}`}
+                disabled={sessionControl.getButtonText() === 'Begin Session'}
               />
 
               {/* Center/Reset button */}
@@ -217,7 +263,19 @@ export default function CurtisOverlay({ message = "Curtis AI Advisor" }: CurtisO
           <div className="px-6 pt-1 pb-3">
             <div className="text-xs text-gray-300 flex items-center justify-between">
               <div className="flex-1 mr-2">
-                {speechRecognition.detectedText}
+                {/* Remove 'Voice:' and 'Listening:' prefixes, handle error and session end messages */}
+                {(() => {
+                  let text = speechRecognition.detectedText || "";
+                  if (text.startsWith("Voice: ")) text = text.replace(/^Voice: /, "");
+                  if (text.startsWith("Listening: ")) text = text.replace(/^Listening: /, "");
+                  if (text === "Speech error: aborted") {
+                    setTimeout(() => {
+                      speechRecognition.setDetectedText("Click the play button to start voice detection");
+                    }, 800);
+                    return "Click the play button to start voice detection";
+                  }
+                  return text;
+                })()}
               </div>
               {speechRecognition.audioLevel > 5 && (
                 <div className="flex items-center space-x-1">
@@ -238,47 +296,38 @@ export default function CurtisOverlay({ message = "Curtis AI Advisor" }: CurtisO
           </div>
 
           {/* Curtis Response area */}
-          {(conversation.isProcessing || conversation.curtisResponse) && (
+          {conversation.curtisResponse && !conversation.isProcessing && (
             <div className="px-6 py-1 pb-2">
-              {conversation.isProcessing ? (
-                <div className="flex items-center space-x-2">
-                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-gray-600 border-t-white"></div>
-                  <span className="text-xs text-gray-300">
-                    Curtis is thinking...
-                  </span>
-                </div>
-              ) : (
-                <div>
-                  <div 
-                    ref={(el) => {
-                      if (el) {
-                        const shouldFade = el.scrollHeight > el.clientHeight;
-                        if (shouldFade) {
-                          el.style.maskImage = 'linear-gradient(to bottom, black 80%, transparent 100%)';
-                          el.style.webkitMaskImage = 'linear-gradient(to bottom, black 80%, transparent 100%)';
-                        } else {
-                          el.style.maskImage = 'none';
-                          el.style.webkitMaskImage = 'none';
-                        }
+              <div>
+                <div 
+                  ref={(el) => {
+                    if (el) {
+                      const shouldFade = el.scrollHeight > el.clientHeight;
+                      if (shouldFade) {
+                        el.style.maskImage = 'linear-gradient(to bottom, black 80%, transparent 100%)';
+                        el.style.webkitMaskImage = 'linear-gradient(to bottom, black 80%, transparent 100%)';
+                      } else {
+                        el.style.maskImage = 'none';
+                        el.style.webkitMaskImage = 'none';
                       }
-                    }}
-                    className="text-sm text-white max-h-40 overflow-y-auto relative scrollbar-hide whitespace-pre-wrap"
-                    style={{
-                      scrollbarWidth: 'none',
-                      msOverflowStyle: 'none'
-                    }}
-                  >
-                    <style jsx>{`
-                      .scrollbar-hide::-webkit-scrollbar { display: none; }
-                    `}</style>
-                    <div className="space-y-1">
-                      {renderFormattedResponse(conversation.curtisResponse)}
-                      <br />
-                      <br />
-                    </div>
+                    }
+                  }}
+                  className="text-sm text-white max-h-40 overflow-y-auto relative scrollbar-hide whitespace-pre-wrap"
+                  style={{
+                    scrollbarWidth: 'none',
+                    msOverflowStyle: 'none'
+                  }}
+                >
+                  <style jsx>{`
+                    .scrollbar-hide::-webkit-scrollbar { display: none; }
+                  `}</style>
+                  <div className="space-y-1">
+                    {renderFormattedResponse(conversation.curtisResponse)}
+                    <br />
+                    <br />
                   </div>
                 </div>
-              )}
+              </div>
             </div>
           )}
 
