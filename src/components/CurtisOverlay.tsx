@@ -12,6 +12,7 @@ import { SessionButton } from './ui/SessionButton';
 import { EndSessionButton } from './ui/EndSessionButton';
 import Icon from '@mdi/react';
 import { mdiArrowCollapse } from '@mdi/js';
+import Image from 'next/image';
 
 interface CurtisOverlayProps {
   message?: string;
@@ -160,24 +161,38 @@ export default function CurtisOverlay({ message = "Curtis AI Advisor" }: CurtisO
         <div className="px-6 py-3 select-none rounded-t-xl">
           <div className="flex items-center justify-between min-h-[2rem]">
             <div className="flex items-center space-x-3">
-              {conversation.isProcessing ? (
-                <div className="animate-spin rounded-full h-2 w-2 border border-gray-600 border-t-white"></div>
-              ) : (
+              <div className="relative w-5 h-5 flex items-center justify-center">
                 <div 
-                  className={`w-2 h-2 rounded-full ${speechRecognition.speechSupported ? 'bg-green-400' : 'bg-red-400'}`}
-                  title={speechRecognition.speechSupported ? "Speech recognition supported" : "Speech recognition not supported"}
-                />
-              )}
+                  className={`absolute inset-0 flex items-center justify-center transition-all duration-300 ease-in-out ${
+                    conversation.isProcessing 
+                      ? 'opacity-100 scale-100' 
+                      : 'opacity-0 scale-75'
+                  }`}
+                >
+                  <div className="animate-spin rounded-full h-5 w-5 border-2 border-gray-600 border-t-white"></div>
+                </div>
+                <div 
+                  className={`absolute inset-0 flex items-center justify-center transition-all duration-300 ease-in-out ${
+                    conversation.isProcessing 
+                      ? 'opacity-0 scale-75' 
+                      : 'opacity-80 scale-100'
+                  }`}
+                >
+                  <Image 
+                    src="/rbc-lion-white.png" 
+                    alt="RBC Lion" 
+                    width={20} 
+                    height={20}
+                  />
+                </div>
+              </div>
               <span 
-                className="text-sm font-bold cursor-pointer text-gray-200 hover:text-white transition-colors leading-none" 
+                className="text-sm font-bold cursor-pointer text-gray-200 hover:text-white transition-all duration-300 ease-in-out leading-none" 
                 onClick={() => setIsCollapsed(!isCollapsed)}
                 title="Click to expand/collapse"
               >
                 {conversation.isProcessing ? "Curtis is thinking..." : message}
               </span>
-              {!speechRecognition.speechSupported && (
-                <span className="text-xs text-gray-300 ml-2 leading-none">(Speech not supported)</span>
-              )}
             </div>
             
             {/* Control buttons */}
