@@ -10,6 +10,13 @@ interface RBCBankingPageProps {
 }
 
 const RBCBankingPage: React.FC<RBCBankingPageProps> = ({ isMobile, onNavigate }) => {
+  // Get current date in desired format (e.g., August 9, 2025)
+  const today = new Date();
+  const formattedDate = today.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
   return (
     <div className="min-h-screen bg-white font-roboto">
       {/* Header Section */}
@@ -62,7 +69,7 @@ const RBCBankingPage: React.FC<RBCBankingPageProps> = ({ isMobile, onNavigate })
                 <a href="#" className="text-white hover:text-yellow-300 text-sm font-medium">My Accounts</a>
                 <a href="#" className="text-white hover:text-yellow-300 text-sm font-medium">Help Centre</a>
               </nav>
-              <span className="text-white text-sm">August 9, 2025</span>
+              <span className="text-white text-sm">{formattedDate}</span>
             </div>
           </div>
         </div>
@@ -174,42 +181,7 @@ const RBCBankingPage: React.FC<RBCBankingPageProps> = ({ isMobile, onNavigate })
 
           {/* Right Column - Sidebar */}
           <div className="space-y-6">
-            {/* Quick Payments & Transfers */}
-            <div className="bg-white border border-gray-200 rounded-lg p-6">
-              <h2 className="text-lg font-medium text-gray-900 mb-4">Quick Payments & Transfers</h2>
-              <div className="grid grid-cols-1 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">From</label>
-                  <select className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm">
-                    <option>Chequing 21212-1212121 = $21,212.12</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">To</label>
-                  <select className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm">
-                    <option>Select ...</option>
-                    <option>Dave McKay</option>
-                    <option>Bill Gates</option>
-                    <option>Joe Pork</option>
-                    <option>Add a Payee</option>
-                    <option>Other Royal Bank Customer</option>
-                    <option>INTERAC e-Transfer</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Amount</label>
-                  <div className="flex">
-                    <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500 text-sm">$</span>
-                    <input type="text" placeholder="0.00" className="flex-1 border border-gray-300 rounded-r-md px-3 py-2 text-sm" />
-                  </div>
-                </div>
-              </div>
-              <div className="mt-4 flex justify-end">
-                <button className="bg-blue-600 text-white px-6 py-2 rounded font-medium hover:bg-blue-700">
-                  Continue
-                </button>
-              </div>
-            </div>
+            {/* ...Quick Payments & Transfers section removed... */}
 
             {/* Messages */}
             <div className="bg-white border border-gray-200 rounded-lg p-6">
@@ -220,7 +192,7 @@ const RBCBankingPage: React.FC<RBCBankingPageProps> = ({ isMobile, onNavigate })
               <div className="space-y-3">
                 <div className="text-sm">
                   <div className="font-medium text-gray-900">Account Alert</div>
-                  <div className="text-gray-600">Your account balance is low</div>
+                  <div className="text-gray-600">Your transfer was successfully deposited</div>
                   <div className="text-xs text-gray-500 mt-1">2 hours ago</div>
                 </div>
                 <div className="text-sm">

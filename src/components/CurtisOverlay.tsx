@@ -148,7 +148,7 @@ export default function CurtisOverlay({ message = "Curtis AI Advisor" }: CurtisO
   return (
     <div 
       ref={overlayRef}
-      className="fixed z-40 cursor-default"
+      className="fixed z-[60] cursor-default"
       style={{
         left: dragAndDrop.position.x,
         top: dragAndDrop.position.y,

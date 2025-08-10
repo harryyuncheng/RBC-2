@@ -1,11 +1,12 @@
 'use client';
 
 import { useState, useRef, useCallback } from 'react';
-import ViewToggle from '../components/ViewToggle';
+import DeviceToggle from '../components/DeviceToggle';
 import CurtisOverlay from '../components/CurtisOverlay';
 import PermissionGate from '../components/PermissionGate';
 import SupportSettings from '../components/SupportSettings';
 import RBCBankingPage from '../components/RBCBankingPage';
+import RBCBankingPageMobile from '../components/RBCBankingPageMobile';
 
 export default function Home() {
   const [isMobile, setIsMobile] = useState(false);
@@ -30,8 +31,8 @@ export default function Home() {
       />
 
       {/* View Toggle Button */}
-      <ViewToggle 
-        isMobile={isMobile} 
+      <DeviceToggle 
+        isMobile={isMobile}
         onToggle={handleViewToggle}
       />
 
@@ -42,7 +43,11 @@ export default function Home() {
 
       {/* Main RBC Interface */}
       <div>
-        <RBCBankingPage isMobile={isMobile} />
+        {isMobile ? (
+          <RBCBankingPageMobile />
+        ) : (
+          <RBCBankingPage isMobile={false} />
+        )}
       </div>
     </div>
   );
