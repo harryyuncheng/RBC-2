@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { extractStructuredActions, executeAction, StructuredAction } from '../utils/actionProcessor';
 
 interface ConversationMessage {
   role: 'user' | 'assistant';
@@ -34,6 +35,7 @@ function extractAdvisorScript(full: string): string {
 export const useConversation = () => {
   const [conversationHistory, setConversationHistory] = useState<ConversationMessage[]>([]);
   const [curtisResponse, setCurtisResponse] = useState("");
+  const [currentActions, setCurrentActions] = useState<StructuredAction[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
 
   const sendToCurtis = useCallback(async (
@@ -62,6 +64,18 @@ export const useConversation = () => {
         const rawResponseText: string = data.response || '';
         // Minimal logging requested
         console.log('Curtis raw response:', rawResponseText);
+        
+        // Extract structured actions before cleaning the script
+        const actions = extractStructuredActions(rawResponseText);
+        setCurrentActions(actions);
+        
+        // Execute any "open" actions immediately
+        actions.forEach(action => {
+          if (action.action === 'open') {
+            setTimeout(() => executeAction(action), 500); // Small delay to let UI update
+          }
+        });
+        
         const cleanedScript = extractAdvisorScript(rawResponseText);
         setCurtisResponse(cleanedScript);
         setConversationHistory(prev => {
@@ -94,11 +108,13 @@ export const useConversation = () => {
   const clearConversationHistory = useCallback(() => {
     setConversationHistory([]);
     setCurtisResponse("");
+    setCurrentActions([]);
   }, []);
 
   return {
     conversationHistory,
     curtisResponse,
+    currentActions,
     isProcessing,
     sendToCurtis,
     clearConversationHistory,

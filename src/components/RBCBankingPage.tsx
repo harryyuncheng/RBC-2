@@ -114,23 +114,23 @@ const RBCBankingPage: React.FC<RBCBankingPageProps> = ({ isMobile, onNavigate })
             
             {/* Ribbon Widget */}
             <div className="hidden md:flex items-center space-x-4 text-white text-xs">
-              <a href="#" className="flex flex-col items-center hover:text-yellow-300">
+              <a href="#" className="flex flex-col items-center hover:underline">
                 <FiFile className="w-5 h-5 mb-1" />
                 <span>Statements</span>
               </a>
-              <a href="#" className="flex flex-col items-center hover:text-yellow-300">
+              <a href="#" className="flex flex-col items-center hover:underline">
                 <FiMail className="w-5 h-5 mb-1" />
                 <span>Messages</span>
               </a>
-              <a href="#" className="flex flex-col items-center hover:text-yellow-300">
+              <a href="#" className="flex flex-col items-center hover:underline">
                 <FiGift className="w-5 h-5 mb-1" />
                 <span>Offers</span>
               </a>
-              <a href="#" className="flex flex-col items-center hover:text-yellow-300">
+              <a href="#" className="flex flex-col items-center hover:underline">
                 <MdOutlineRocketLaunch className="w-5 h-5 mb-1" />
                 <span>Beyond Banking</span>
               </a>
-              <a href="#" className="flex flex-col items-center hover:text-yellow-300">
+              <a href="#" className="flex flex-col items-center hover:underline">
                 <FiPrinter className="w-5 h-5 mb-1" />
                 <span>Print</span>
               </a>

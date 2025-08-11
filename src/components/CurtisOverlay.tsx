@@ -10,15 +10,16 @@ import { captureDOMContext, loadContextPrompt } from '../utils/domContext';
 import { OverlayButton } from './ui/OverlayButton';
 import { SessionButton } from './ui/SessionButton';
 import { EndSessionButton } from './ui/EndSessionButton';
+import ActionHighlighter from './ActionHighlighter';
 import Icon from '@mdi/react';
 import { mdiArrowCollapse } from '@mdi/js';
 import Image from 'next/image';
 
-interface CurtisOverlayProps {
+interface AdvisorAssistOverlayProps {
   message?: string;
 }
 
-export default function CurtisOverlay({ message = "Curtis AI Advisor" }: CurtisOverlayProps) {
+export default function AdvisorAssistOverlay({ message = "Advisor Assist" }: AdvisorAssistOverlayProps) {
   const [contextPrompt, setContextPrompt] = useState("");
   const [lastDOMContext, setLastDOMContext] = useState<string | null>(null);
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -106,7 +107,7 @@ export default function CurtisOverlay({ message = "Curtis AI Advisor" }: CurtisO
     const isContextReinforcement = totalExchanges > 0 && totalExchanges % 5 === 0;
     
     if (isContextReinforcement) {
-      speechRecognition.setDetectedText(`${text} (Context refreshed for Curtis)`);
+      speechRecognition.setDetectedText(`${text} (Context refreshed)`);
     }
     
     // Always capture fresh DOM context for every recording
@@ -146,16 +147,20 @@ export default function CurtisOverlay({ message = "Curtis AI Advisor" }: CurtisO
   }, []);
 
   return (
-    <div 
-      ref={overlayRef}
-      className="fixed z-[60] cursor-default"
-      style={{
-        left: dragAndDrop.position.x,
-        top: dragAndDrop.position.y,
-        transform: dragAndDrop.position.x === 0 && dragAndDrop.position.y === 0 ? 'translate(calc(50vw - 50%), 2rem)' : 'none'
-      }}
-      onMouseDown={dragAndDrop.handleMouseDown}
-    >
+    <>
+      {/* Action Highlighter - renders highlights for current actions */}
+      <ActionHighlighter actions={conversation.currentActions} />
+      
+      <div 
+        ref={overlayRef}
+        className="fixed z-[60] cursor-default"
+        style={{
+          left: dragAndDrop.position.x,
+          top: dragAndDrop.position.y,
+          transform: dragAndDrop.position.x === 0 && dragAndDrop.position.y === 0 ? 'translate(calc(50vw - 50%), 2rem)' : 'none'
+        }}
+        onMouseDown={dragAndDrop.handleMouseDown}
+      >
       <div className="bg-black/80 text-white border border-white/30 rounded-xl shadow-2xl w-136" style={{ backgroundColor: 'var(--overlay-background)', color: 'var(--overlay-icon-color)' }}>
         {/* Main message area */}
         <div className="px-6 py-3 select-none rounded-t-xl">
@@ -191,7 +196,7 @@ export default function CurtisOverlay({ message = "Curtis AI Advisor" }: CurtisO
                 onClick={() => setIsCollapsed(!isCollapsed)}
                 title="Click to expand/collapse"
               >
-                {conversation.isProcessing ? "Curtis is thinking..." : message}
+                {conversation.isProcessing ? "Thinking..." : message}
               </span>
             </div>
             
@@ -310,7 +315,7 @@ export default function CurtisOverlay({ message = "Curtis AI Advisor" }: CurtisO
             </div>
           </div>
 
-          {/* Curtis Response area */}
+          {/* Advisor Assist Response area */}
           {conversation.curtisResponse && !conversation.isProcessing && (
             <div className="px-6 py-1 pb-2">
               <div>
@@ -358,5 +363,6 @@ export default function CurtisOverlay({ message = "Curtis AI Advisor" }: CurtisO
         </div>
       </div>
     </div>
+    </>
   );
 }
