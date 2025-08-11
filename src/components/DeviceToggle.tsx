@@ -15,12 +15,12 @@ export default function DeviceToggle({ isMobile, onToggle }: DeviceToggleProps) 
           </span>
           <button
             onClick={onToggle}
-            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-300 focus:outline-none ${
               isMobile ? 'bg-[#005DAA]' : 'bg-gray-200'
             }`}
           >
             <span
-              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-300 ${
                 isMobile ? 'translate-x-6' : 'translate-x-1'
               }`}
             />
