@@ -70,7 +70,7 @@ export const useSessionControl = () => {
         clearInterval(timerRef.current);
       }
     };
-  }, [sessionState.isActive]);
+  }, [sessionState.isActive, sessionState.elapsedTime]);
 
   const startSession = useCallback(() => {
     const conversationId = sessionState.conversationId || `session-${Date.now()}`;

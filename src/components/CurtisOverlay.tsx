@@ -71,7 +71,7 @@ export default function AdvisorAssistOverlay({ message = "Advisor Assist" }: Adv
       window.removeEventListener('error', handleError);
       speechRecognition.stopListening();
     };
-  }, []);
+  }, [speechRecognition]);
 
   // Sync microphone state with session state (but don't interfere with immediate user actions)
   useEffect(() => {
@@ -85,7 +85,7 @@ export default function AdvisorAssistOverlay({ message = "Advisor Assist" }: Adv
       
       return () => clearTimeout(timer);
     }
-  }, [sessionControl.sessionState.isActive, speechRecognition.micEnabled]);
+  }, [sessionControl.sessionState.isActive, speechRecognition.micEnabled, speechRecognition]);
 
   // Capture DOM context - always get the latest context for each recording
   const captureDOMContextForRecording = useCallback((): string => {

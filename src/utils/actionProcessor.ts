@@ -21,7 +21,7 @@ export function extractStructuredActions(responseText: string): StructuredAction
     // Validate the structure
     if (!Array.isArray(actionsArray)) return [];
     
-    return actionsArray.filter((action: any) => 
+    return actionsArray.filter((action: StructuredAction) => 
       action && 
       typeof action.target === 'string' && 
       typeof action.label === 'string' && 

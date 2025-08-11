@@ -5,22 +5,14 @@ import {
   FiX, 
   FiUser, 
   FiFile, 
-  FiMail, 
-  FiGift, 
   FiSettings,
   FiChevronRight,
   FiCreditCard,
   FiDollarSign,
-  FiTrendingUp,
-  FiShield
+  FiTrendingUp
 } from 'react-icons/fi';
-import { MdOutlineRocketLaunch } from 'react-icons/md';
 
-interface RBCBankingPageMobileProps {
-  onNavigate?: (page: string) => void;
-}
-
-const RBCBankingPageMobile: React.FC<RBCBankingPageMobileProps> = ({ onNavigate }) => {
+const RBCBankingPageMobile: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('accounts');
 
