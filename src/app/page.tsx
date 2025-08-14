@@ -46,7 +46,7 @@ export default function Home() {
         {isMobile ? (
           <RBCBankingPageMobile />
         ) : (
-          <RBCBankingPage />
+          <RBCBankingPage isMobile={false} />
         )}
       </div>
     </div>

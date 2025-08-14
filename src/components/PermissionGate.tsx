@@ -56,14 +56,14 @@ export default function PermissionGate({ children, onResetRef }: PermissionGateP
           microphone: permissionStatus.state === 'granted' ? 'granted' : 
                      permissionStatus.state === 'denied' ? 'denied' : 'pending'
         }));
-      } catch {
+      } catch (error) {
         // Fallback: if permissions API not supported, try getUserMedia to check
         try {
           const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
           stream.getTracks().forEach(track => track.stop());
           setPermissions(prev => ({ ...prev, microphone: 'granted' }));
-        } catch {
-          // Show modal if we can&apos;t access microphone and haven&apos;t asked yet
+        } catch (getUserMediaError) {
+          // Show modal if we can't access microphone and haven't asked yet
           setShowModal(true);
           setPermissions(prev => ({ ...prev, microphone: 'denied' }));
         }
@@ -243,7 +243,7 @@ export default function PermissionGate({ children, onResetRef }: PermissionGateP
 
             <div className="text-xs text-gray-500 mb-2">
               Note: You can always change microphone permissions later in your browser settings. 
-              Curtis will work without microphone permissions, but AI Assistance won&apos;t be available.
+              Curtis will work without microphone permissions, but AI Assistance won't be available.
             </div>
           </div>
 

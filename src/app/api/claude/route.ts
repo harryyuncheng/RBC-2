@@ -7,29 +7,9 @@ interface ConversationHistoryItem {
   hasDOMContext?: boolean;
 }
 
-interface Message {
-  role: 'user' | 'assistant';
-  content: string;
-}
-
-interface CurrentMessageContent {
-  type: 'text';
-  text: string;
-}
-
-interface ApiResponse {
-  content: Array<{ text: string }>;
-  usage: { input_tokens: number; output_tokens: number; [key: string]: unknown };
-}
-
 export async function POST(request: NextRequest) {
   try {
-    const { voiceInput, contextPrompt, domContext, conversationHistory }: {
-      voiceInput: string;
-      contextPrompt?: string;
-      domContext?: string;
-      conversationHistory?: ConversationHistoryItem[];
-    } = await request.json();
+    const { voiceInput, contextPrompt, domContext, conversationHistory } = await request.json();
 
     if (!voiceInput) {
       return NextResponse.json({ error: 'Voice input is required' }, { status: 400 });
@@ -42,7 +22,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Build messages array with conversation history
-    const messages: Message[] = [];
+    const messages: any[] = [];
 
     // Add conversation history first (if any)
     if (conversationHistory && (conversationHistory as ConversationHistoryItem[]).length > 0) {
@@ -138,7 +118,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Build current message content
-    const currentMessageContent: CurrentMessageContent[] = [];
+    const currentMessageContent: any[] = [];
     
     // Add current voice input and context
     let textContent = voiceInput as string;
@@ -169,10 +149,9 @@ export async function POST(request: NextRequest) {
     });
 
     // Add current message to messages array
-    // Convert 'currentMessageContent' to a string before assigning
     messages.push({
       role: 'user',
-      content: currentMessageContent.map(item => item.text).join('\n')
+      content: currentMessageContent
     });
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -200,12 +179,12 @@ export async function POST(request: NextRequest) {
       }, { status: response.status });
     }
 
-    const data: ApiResponse = await response.json();
+    const data: any = await response.json();
 
     // Minimal logging: log the uncensored Claude output content as returned by API
     try {
       const rawTextParts = Array.isArray(data.content)
-        ? data.content.map((c: { text: string }) => (c && typeof c === 'object' && typeof c.text === 'string') ? c.text : '')
+        ? data.content.map((c: any) => (c && typeof c === 'object' && typeof c.text === 'string') ? c.text : '')
         : [];
       const fullCombined = rawTextParts.filter(Boolean).join('\n\n');
       if (fullCombined) console.log('Curtis raw API output:', fullCombined);

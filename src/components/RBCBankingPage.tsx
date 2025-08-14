@@ -4,7 +4,12 @@ import Image from 'next/image';
 import { FiFile, FiMail, FiGift, FiPrinter } from 'react-icons/fi';
 import { MdOutlineRocketLaunch } from 'react-icons/md';
 
-const RBCBankingPage: React.FC = () => {
+interface RBCBankingPageProps {
+  isMobile: boolean;
+  onNavigate?: (page: string) => void;
+}
+
+const RBCBankingPage: React.FC<RBCBankingPageProps> = ({ isMobile, onNavigate }) => {
   // Get current date in desired format (e.g., August 9, 2025)
   const today = new Date();
   const formattedDate = today.toLocaleDateString('en-US', {
